@@ -1,0 +1,22 @@
+---
+title: "Replication Code for Second Deadline"
+output: html_document
+---
+
+```{r}
+rm(list=ls(all=TRUE))
+library(foreign)
+library(ggplot2)
+library(stargazer)
+library(arm)
+library(rms)
+library(msm)
+library(systemfit)
+library(xtable)
+library(gtools)
+library(multiwayvcov)
+library(numDeriv)
+library(interplot)
+library(modmarg)
+```
+
