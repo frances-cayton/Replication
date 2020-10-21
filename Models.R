@@ -15,6 +15,15 @@ install.packages("data.table")
 # if this doesn't work, install from https://cran.r-project.org/web/packages/data.table/index.html
 # run something like:
 #install.packages("~/Downloads/data.table_1.13.2.tgz", repos = NULL, type = .Platform$pkgType)
+install.packages("rms")
+install.packages("msm")
+install.packages("systemfit")
+install.packages("xtable")
+install.packages("gtools")
+install.packages("multiwayvcov")
+install.packages("numDeriv")
+install.packages("interplot")
+install.packages("modmarg")
 
 rm(list=ls(all=TRUE))
 library(foreign)
