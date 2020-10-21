@@ -4,11 +4,24 @@
 #### Benchmark Models ##############
 ####################################
 
+install.packages("stargazer")
+install.packages("lme4")
+install.packages("arm")
+install.packages("statmod") 
+# if this doesn't work, install from https://cran.r-project.org/web/packages/statmod/index.html 
+# run something like:
+# install.packages("/LOCAL_PATH_TO_STATMOD/statmod_1.4.35.tgz", repos = NULL, type = .Platform$pkgType)
+install.packages("data.table")
+# if this doesn't work, install from https://cran.r-project.org/web/packages/data.table/index.html
+# run something like:
+#install.packages("~/Downloads/data.table_1.13.2.tgz", repos = NULL, type = .Platform$pkgType)
 
 rm(list=ls(all=TRUE))
 library(foreign)
 library(ggplot2)
 library(stargazer)
+library(lme4) #from Molly
+library(statmod) #from Molly
 library(arm)
 library(rms)
 library(msm)
