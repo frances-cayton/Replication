@@ -24,6 +24,9 @@ install.packages("multiwayvcov")
 install.packages("numDeriv")
 install.packages("interplot")
 install.packages("modmarg")
+# if this doesn't work, install from https://cran.r-project.org/src/contrib/Archive/modmarg/ 
+# run something like:
+#install.packages("~/Downloads/modmarg_0.9.2.tar.gz", repos = NULL, type = "source")
 
 rm(list=ls(all=TRUE))
 library(foreign)
@@ -42,7 +45,15 @@ library(numDeriv)
 library(interplot)
 library(modmarg)
 
-data<-read.dta("datawork.dta")
+#Declare WDs
+
+wd_m <- '/Users/mollyhickey/Documents/Harvard/G1/Quantitative Methods/Final paper/dataverse_files'
+
+#Set WD
+
+setwd(wd_m)
+
+load("datawork.RData") #updated
 
 specify_decimal <- function(x, k) format(round(x, k), nsmall=k)
 
