@@ -20,3 +20,4 @@ library(interplot)
 library(modmarg)
 ```
 
+# Replication of Figure 1 (Chengyu)
