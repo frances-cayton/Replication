@@ -17,7 +17,279 @@ library(gtools)
 library(multiwayvcov)
 library(numDeriv)
 library(interplot)
-library(modmarg)
+
+load("datawork.RData")
 ```
 
 # Replication of Figure 1 (Chengyu)
+
+
+# Replication of Table 1 (Frances)
+
+Replicating a function used for decimal places
+```{r}
+data <- table
+head(table)
+specify_decimal <- function(x, k) {format(round(x, k), nsmall = k)}
+```
+
+These are models creating benchmark OLS estimates for proximity to Soriana stores on vote share:  
+
+```{r}
+#regressing different parties on proximity to soriana store 
+robustness1 <- ols(proximity ~ PRI06 +PRD06+PAN06+PART06, data= data, x= TRUE, y= TRUE)
+```
+
+
+```{r}
+#this is the same as the first but incorporating the municipal districts. i think once we read gary's paper and get a sense of that municipality difference we were talking about 
+robustness2 <- ols( proximity ~ PRI06+PRD06+PAN06+PART06+
+                      id_mun, data=data, x=TRUE, y=TRUE)
+```
+
+
+```{r}
+#this is the larger model
+robustness3 <- ols( proximity ~ PRI06+PRD06+PAN06+PART06+
+                      lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+                      EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+                      PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+                      PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+                      CAR+CELULAR+INTERNET+
+                     id_mun, data=data, x=TRUE, y=TRUE)
+```
+
+
+```{r}
+robustness4 <- ols( proximity ~ 
+                      lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+                      EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+                      PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+                      PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+                      CAR+CELULAR+INTERNET+
+                      id_mun, data=data, x=TRUE, y=TRUE)
+```
+
+
+This creates a table of covariates
+
+```{r}
+stargazer(robustness1, robustness2, robustness3, robustness4, star.cutoffs = c(0.05, 0.01, 0.001), style = "qje", digits=3,
+          covariate.labels = c("PRI 2006", "PRD2006", "PAN2006", "Turnout 2006","Population Log", "Population over 18 ",
+                               "Population over 65", "Area", "Density", "Indigenous","Catholic","Nonreligious","Education","College degree","Illiteracy","Inhabitants per house","Population in the labor market",
+                               "Female population in the labor market", "No insurance","Female head of household","Inhabitants per room", "Dirt floor", "All services", "No services", "Car", "Mobile phone", "Internet", "ACULCO" , "ALMOLOYA DE JUAREZ " , 
+                               "ALMOLOYA DEL RIO" , "AMANALCO" , "AMECAMECA" , "APAXCO" , "ATENCO" , "ATIZAPAN" , "ATIZAPAN DE ZARAGOZA" , "AXAPUSCO" , "AYAPANGO" , "CALIMAYA" , "CAPULHUAC" , "CHALCO" , "CHAPULTEPEC" ,
+                               "CHIAUTLA" , "CHICOLOAPAN" , "CHICONCUAC" , "CHIMALHUACAN" , "COACALCO DE BERRIOZABAL" , "COCOTITLAN" , "COYOTEPEC" , "CUAUTITLAN" , "CUAUTITLAN IZCALLI" , "ECATEPEC DE MORELOS" , "HUEHUETOCA",
+                               "HUEYPOXTLA" , "HUIXQUILUCAN" , "ISIDRO FABELA" , "IXTAPALUCA" , "IXTLAHUACA" , "JALTENCO" , "JILOTEPEC" , "JILOTZINGO" , "JIQUIPILCO" , "JOCOTITLAN" , "JOQUICINGO" , "JUCHITEPEC" , "LA PAZ" ,
+                               "LERMA" , "MELCHOR OCAMPO" , "METEPEC" , "MEXICALTZINGO" , "MORELOS" , "NAUCALPAN DE JUAREZ" , "NEXTLALPAN" , "NEZAHUALCOYOTL" , "NICOLAS ROMERO" , "OCOYOACAC" , "OCUILAN" , "OTUMBA" , 
+                               "OTZOLOTEPEC" , "PAPALOTLA" , "POLOTITLAN" , "RAYON" , "SAN ANTONIO LA ISLA" , "SAN FELIPE DEL PROGRESO" , "SAN MARTIN DE LAS PIRAMIDES" , "SAN MATEO ATENCO" , "SOYANIQUILPAN DE JUAREZ" , "TECAMAC" ,
+                               "TEMAMATLA" , "TEMASCALAPA" , "TEMOAYA" , "TENANGO DEL AIRE" , "TENANGO DEL VALLE" , "TEOLOYUCAN" , "TEOTIHUACAN" , "TEPETLAOXTOC" , "TEPOTZOTLAN" , "TEQUIXQUIAC" , "TEXCALYACAC" , "TEXCOCO" , "TEZOYUCA" ,
+                               "TIANGUISTENCO" , "TLALMANALCO" , "TLALNEPANTLA DE BAZ" , "TOLUCA" , "TONANITLA" , "TULTEPEC" , "TULTITLAN" , "VALLE DE CHALCO SOLIDARIDAD" , "VILLA DE ALLEND" , "VILLA DEL CARBON" , "VILLA VICTORIA" , 
+                               "XALATLACO" , "XONACATLAN" , "ZINACANTEPEC" , "ZUMPANGO" , "ALVARO OBREGON" , "AZCAPOTZALCO" , "BENITO JUAREZ" , "COYOACAN" , "CUAJIMALPA DE MORELOS" , "CUAUHTEMOC" , "GUSTAVO A. MADERO" , "IZTACALCO" , 
+                               "IZTAPALAPA" , "MAGDALENA CONTRERAS" , "MIGUEL HIDALGO" , "MILPA ALTA" , "TLAHUAC" , "TLALPAN" , "VENUSTIANO CARRANZA" , "XOCHIMILCO"))
+```
+
+This creates the Benchmark Model table from page 24 of the appendix. 
+This is the basis of Table 1. 
+```{r}
+#reclassifying municipality and district as factor variables
+data$id_mun<-factor(data$id_mun)
+data$id_dist<-factor(data$id_dist)
+```
+
+
+```{r}
+#empty matrices to take the slopes and standard errors of this benchmark model
+slopesBM<-matrix(NA,3,4)
+seBM<-matrix(NA,3,4)
+
+
+benchmarkPRI.1 <- lm( EPNa ~ proximity*PRIstr*highTURNOUT+proximity*PRDstr*highTURNOUT+proximity*PANstr*highTURNOUT+     
+                         PRI09a+PRD09a+PAN09a+PART09+
+                         lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+                         EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+                         PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+                         PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+                         CAR+CELULAR+INTERNET+
+                         id_mun, data=data, x=TRUE, y=TRUE)
+```
+
+This function "returns a multi-way cluster-robust variance-covariance matrix" -- I think this bit right here is related to what Gary was saying on the type of errors and that they can cover up problems with the model. I don't fully understand this right now, but perhaps after we get a little further in the semester. 
+```{r}
+covBMpri <- cluster.vcov(benchmarkPRI.1, data$id_dist)
+
+#t test
+coeftest(benchmarkPRI.1, covBMpri)
+```
+
+
+```{r}
+g_pri <- function(b){
+  return( b[2] + b[139] + b[140] + b[146] )
+}
+
+g_prd <- function(b){
+  return( b[2] + b[140] + b[142] + b[147] )
+}
+
+g_pan <- function(b){
+  return( b[2] + b[140] + b[144] + b[148] )
+}
+
+#again, not very sure what this function is doing
+grad_g_pri <-  jacobian(g_pri, benchmarkPRI.1$coef)
+grad_g_prd <-  jacobian(g_prd, benchmarkPRI.1$coef)
+grad_g_pan <-  jacobian(g_pan, benchmarkPRI.1$coef)
+```
+
+Taking the slopes and standard errors:
+```{r}
+slopesBM[1,1] <- benchmarkPRI.1$coefficients[c("proximity")] + benchmarkPRI.1$coefficients[c("proximity:highTURNOUT")] + benchmarkPRI.1$coefficients[c("proximity:PRIstr")]+  benchmarkPRI.1$coefficients[c("proximity:PRIstr:highTURNOUT")]
+
+slopesBM[2,1] <- benchmarkPRI.1$coefficients[c("proximity")] + benchmarkPRI.1$coefficients[c("proximity:highTURNOUT")] + benchmarkPRI.1$coefficients[c("proximity:PRDstr")]+  benchmarkPRI.1$coefficients[c("proximity:highTURNOUT:PRDstr")]
+
+slopesBM[3,1] <- benchmarkPRI.1$coefficients[c("proximity")] + benchmarkPRI.1$coefficients[c("proximity:highTURNOUT")] + benchmarkPRI.1$coefficients[c("proximity:PANstr")]+  benchmarkPRI.1$coefficients[c("proximity:highTURNOUT:PANstr")]
+
+seBM[1,1]<-sqrt(grad_g_pri%*% covBMpri %*% t(grad_g_pri))
+
+seBM[2,1]<-sqrt(grad_g_prd%*% covBMpri %*% t(grad_g_prd))
+
+seBM[3,1]<-sqrt(grad_g_pan%*% covBMpri %*% t(grad_g_pan))
+```
+
+
+The same model for AMLO and the other parties: 
+```{r}
+benchmarkPRD.1 <- lm( AMLOa ~ proximity*PRIstr*highTURNOUT+proximity*PRDstr*highTURNOUT+proximity*PANstr*highTURNOUT+     
+                         PRI09a+PRD09a+PAN09a+PART09+
+                         lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+                         EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+                         PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+                         PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+                         CAR+CELULAR+INTERNET+
+                         id_mun, data=data, x=TRUE, y=TRUE)
+
+covBMprd <- cluster.vcov(benchmarkPRD.1, data$id_dist)
+
+coeftest(benchmarkPRD.1, covBMprd)
+
+g_pri <- function(b){
+  return( b[2] + b[139] + b[140] + b[146] )
+}
+
+g_prd <- function(b){
+  return( b[2] + b[140] + b[142] + b[147] )
+}
+
+g_pan <- function(b){
+  return( b[2] + b[140] + b[144] + b[148] )
+}
+
+grad_g_pri <-  jacobian(g_pri, benchmarkPRD.1$coef)
+grad_g_prd <-  jacobian(g_prd, benchmarkPRD.1$coef)
+grad_g_pan <-  jacobian(g_pan, benchmarkPRD.1$coef)
+
+
+slopesBM[1,2] <- benchmarkPRD.1$coefficients[c("proximity")] + benchmarkPRD.1$coefficients[c("proximity:highTURNOUT")] + benchmarkPRD.1$coefficients[c("proximity:PRIstr")]+  benchmarkPRD.1$coefficients[c("proximity:PRIstr:highTURNOUT")]
+slopesBM[2,2] <- benchmarkPRD.1$coefficients[c("proximity")] + benchmarkPRD.1$coefficients[c("proximity:highTURNOUT")] + benchmarkPRD.1$coefficients[c("proximity:PRDstr")]+  benchmarkPRD.1$coefficients[c("proximity:highTURNOUT:PRDstr")]
+slopesBM[3,2] <- benchmarkPRD.1$coefficients[c("proximity")] + benchmarkPRD.1$coefficients[c("proximity:highTURNOUT")] + benchmarkPRD.1$coefficients[c("proximity:PANstr")]+  benchmarkPRD.1$coefficients[c("proximity:highTURNOUT:PANstr")]
+seBM[1,2]<-sqrt(grad_g_pri%*% covBMprd %*% t(grad_g_pri))
+seBM[2,2]<-sqrt(grad_g_prd%*% covBMprd %*% t(grad_g_prd))
+seBM[3,2]<-sqrt(grad_g_pan%*% covBMprd %*% t(grad_g_pan))
+
+
+benchmarkPAN.1 <- lm( JVMa ~ proximity*PRIstr*highTURNOUT+proximity*PRDstr*highTURNOUT+proximity*PANstr*highTURNOUT+     
+                         PRI09a+PRD09a+PAN09a+PART09+
+                         lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+                         EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+                         PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+                         PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+                         CAR+CELULAR+INTERNET+
+                         id_mun, data=data, x=TRUE, y=TRUE)
+
+covBMpan <- cluster.vcov(benchmarkPAN.1, data$id_dist)
+
+coeftest(benchmarkPAN.1, covBMpan)
+
+g_pri <- function(b){
+  return( b[2] + b[139] + b[140] + b[146] )
+}
+
+g_prd <- function(b){
+  return( b[2] + b[140] + b[142] + b[147] )
+}
+
+g_pan <- function(b){
+  return( b[2] + b[140] + b[144] + b[148] )
+}
+
+grad_g_pri <-  jacobian(g_pri, benchmarkPAN.1$coef)
+grad_g_prd <-  jacobian(g_prd, benchmarkPAN.1$coef)
+grad_g_pan <-  jacobian(g_pan, benchmarkPAN.1$coef)
+
+
+slopesBM[1,3] <- benchmarkPAN.1$coefficients[c("proximity")] + benchmarkPAN.1$coefficients[c("proximity:highTURNOUT")] + benchmarkPAN.1$coefficients[c("proximity:PRIstr")]+  benchmarkPAN.1$coefficients[c("proximity:PRIstr:highTURNOUT")]
+slopesBM[2,3] <- benchmarkPAN.1$coefficients[c("proximity")] + benchmarkPAN.1$coefficients[c("proximity:highTURNOUT")] + benchmarkPAN.1$coefficients[c("proximity:PRDstr")]+  benchmarkPAN.1$coefficients[c("proximity:highTURNOUT:PRDstr")]
+slopesBM[3,3] <- benchmarkPAN.1$coefficients[c("proximity")] + benchmarkPAN.1$coefficients[c("proximity:highTURNOUT")] + benchmarkPAN.1$coefficients[c("proximity:PANstr")]+  benchmarkPAN.1$coefficients[c("proximity:highTURNOUT:PANstr")]
+seBM[1,3]<-sqrt(grad_g_pri%*% covBMpan %*% t(grad_g_pri))
+seBM[2,3]<-sqrt(grad_g_prd%*% covBMpan %*% t(grad_g_prd))
+seBM[3,3]<-sqrt(grad_g_pan%*% covBMpan %*% t(grad_g_pan))
+
+
+benchmarkPART.1 <- lm( PART ~ proximity*PRIstr*highTURNOUT+proximity*PRDstr*highTURNOUT+proximity*PANstr*highTURNOUT+     
+                          PRI09a+PRD09a+PAN09a+PART09+
+                          lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+                          EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+                          PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+                          PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+                          CAR+CELULAR+INTERNET+
+                          id_mun, data=data, x=TRUE, y=TRUE)
+
+covBMpart <- cluster.vcov(benchmarkPART.1, data$id_dist)
+
+coeftest(benchmarkPART.1, covBMpart)
+
+g_pri <- function(b){
+  return( b[2] + b[139] + b[140] + b[146] )
+}
+
+g_prd <- function(b){
+  return( b[2] + b[140] + b[142] + b[147] )
+}
+
+g_pan <- function(b){
+  return( b[2] + b[140] + b[144] + b[148] )
+}
+
+grad_g_pri <-  jacobian(g_pri, benchmarkPART.1$coef)
+grad_g_prd <-  jacobian(g_prd, benchmarkPART.1$coef)
+grad_g_pan <-  jacobian(g_pan, benchmarkPART.1$coef)
+
+slopesBM[1,4] <- benchmarkPART.1$coefficients[c("proximity")] + benchmarkPART.1$coefficients[c("proximity:highTURNOUT")] + benchmarkPART.1$coefficients[c("proximity:PRIstr")]+  benchmarkPART.1$coefficients[c("proximity:PRIstr:highTURNOUT")]
+slopesBM[2,4] <- benchmarkPART.1$coefficients[c("proximity")] + benchmarkPART.1$coefficients[c("proximity:highTURNOUT")] + benchmarkPART.1$coefficients[c("proximity:PRDstr")]+  benchmarkPART.1$coefficients[c("proximity:highTURNOUT:PRDstr")]
+slopesBM[3,4] <- benchmarkPART.1$coefficients[c("proximity")] + benchmarkPART.1$coefficients[c("proximity:highTURNOUT")] + benchmarkPART.1$coefficients[c("proximity:PANstr")]+  benchmarkPART.1$coefficients[c("proximity:highTURNOUT:PANstr")]
+
+seBM[1,4]<-sqrt(grad_g_pri%*% covBMpart %*% t(grad_g_pri))
+seBM[2,4]<-sqrt(grad_g_prd%*% covBMpart %*% t(grad_g_prd))
+seBM[3,4]<-sqrt(grad_g_pan%*% covBMpart %*% t(grad_g_pan))
+```
+
+Table 1: 
+```{r}
+stargazer(coeftest(benchmarkPRI.1, covBMpri), coeftest(benchmarkPRD.1, covBMprd), coeftest(benchmarkPAN.1, covBMpan), coeftest(benchmarkPART.1, covBMpart),style = "qje", star.cutoffs = c(0.05, 0.01, 0.001), digits=3,
+          covariate.labels = c("Proximity", "PRI stronghold", "High Mobilization", "PRD stronghold","PAN stronghold", "PRI 2009", "PRD2009", "PAN2009", "Turnout 2009", "Population Log", "Population over 18 ",
+                               "Population over 65", "Area", "Density", "Indigenous","Catholic","Nonreligious","Education","College degree","Illiteracy","Inhabitants per house","Population in the labor market",
+                               "Female population in the labor market", "No insurance","Female head of household","Inhabitants per room", "Dirt floor", "All services", "No services", "Car", "Mobile phone", "Internet", "ACULCO" , "ALMOLOYA DE JUAREZ " , 
+                               "ALMOLOYA DEL RIO" , "AMANALCO" , "AMECAMECA" , "APAXCO" , "ATENCO" , "ATIZAPAN" , "ATIZAPAN DE ZARAGOZA" , "AXAPUSCO" , "AYAPANGO" , "CALIMAYA" , "CAPULHUAC" , "CHALCO" , "CHAPULTEPEC" ,
+                               "CHIAUTLA" , "CHICOLOAPAN" , "CHICONCUAC" , "CHIMALHUACAN" , "COACALCO DE BERRIOZABAL" , "COCOTITLAN" , "COYOTEPEC" , "CUAUTITLAN" , "CUAUTITLAN IZCALLI" , "ECATEPEC DE MORELOS" , "HUEHUETOCA",
+                               "HUEYPOXTLA" , "HUIXQUILUCAN" , "ISIDRO FABELA" , "IXTAPALUCA" , "IXTLAHUACA" , "JALTENCO" , "JILOTEPEC" , "JILOTZINGO" , "JIQUIPILCO" , "JOCOTITLAN" , "JOQUICINGO" , "JUCHITEPEC" , "LA PAZ" ,
+                               "LERMA" , "MELCHOR OCAMPO" , "METEPEC" , "MEXICALTZINGO" , "MORELOS" , "NAUCALPAN DE JUAREZ" , "NEXTLALPAN" , "NEZAHUALCOYOTL" , "NICOLAS ROMERO" , "OCOYOACAC" , "OCUILAN" , "OTUMBA" , 
+                               "OTZOLOTEPEC" , "PAPALOTLA" , "POLOTITLAN" , "RAYON" , "SAN ANTONIO LA ISLA" , "SAN FELIPE DEL PROGRESO" , "SAN MARTIN DE LAS PIRAMIDES" , "SAN MATEO ATENCO" , "SOYANIQUILPAN DE JUAREZ" , "TECAMAC" ,
+                               "TEMAMATLA" , "TEMASCALAPA" , "TEMOAYA" , "TENANGO DEL AIRE" , "TENANGO DEL VALLE" , "TEOLOYUCAN" , "TEOTIHUACAN" , "TEPETLAOXTOC" , "TEPOTZOTLAN" , "TEQUIXQUIAC" , "TEXCALYACAC" , "TEXCOCO" , "TEZOYUCA" ,
+                               "TIANGUISTENCO" , "TLALMANALCO" , "TLALNEPANTLA DE BAZ" , "TOLUCA" , "TONANITLA" , "TULTEPEC" , "TULTITLAN" , "VALLE DE CHALCO SOLIDARIDAD" , "VILLA DE ALLEND" , "VILLA DEL CARBON" , "VILLA VICTORIA" , 
+                               "XALATLACO" , "XONACATLAN" , "ZINACANTEPEC" , "ZUMPANGO" , "ALVARO OBREGON" , "AZCAPOTZALCO" , "BENITO JUAREZ" , "COYOACAN" , "CUAJIMALPA DE MORELOS" , "CUAUHTEMOC" , "GUSTAVO A. MADERO" , "IZTACALCO" , 
+                               "IZTAPALAPA" , "MAGDALENA CONTRERAS" , "MIGUEL HIDALGO" , "MILPA ALTA" , "TLAHUAC" , "TLALPAN" , "VENUSTIANO CARRANZA" , "XOCHIMILCO"))
+
+
+```
+
