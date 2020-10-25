@@ -17,6 +17,7 @@ library(gtools)
 library(multiwayvcov)
 library(numDeriv)
 library(interplot)
+library(modmarg)
 
 load("datawork.RData")
 ```
@@ -26,10 +27,13 @@ load("datawork.RData")
 
 # Replication of Table 1 (Frances)
 
-Replicating a function used for decimal places
+I've mostly annotated and re-run the pre-existing code. I plan to go *back* through and re-do as simulations similar to how we were shown in section.
+
 ```{r}
 data <- table
 head(table)
+
+#this is a function to round to the hundreds place of a decimal
 specify_decimal <- function(x, k) {format(round(x, k), nsmall = k)}
 ```
 
@@ -42,7 +46,7 @@ robustness1 <- ols(proximity ~ PRI06 +PRD06+PAN06+PART06, data= data, x= TRUE, y
 
 
 ```{r}
-#this is the same as the first but incorporating the municipal districts. i think once we read gary's paper and get a sense of that municipality difference we were talking about 
+#this is the same as the first but incorporating the municipal districts. 
 robustness2 <- ols( proximity ~ PRI06+PRD06+PAN06+PART06+
                       id_mun, data=data, x=TRUE, y=TRUE)
 ```
@@ -136,7 +140,7 @@ g_pan <- function(b){
   return( b[2] + b[140] + b[144] + b[148] )
 }
 
-#again, not very sure what this function is doing
+#again, not very sure what this jacobian function is doing
 grad_g_pri <-  jacobian(g_pri, benchmarkPRI.1$coef)
 grad_g_prd <-  jacobian(g_prd, benchmarkPRI.1$coef)
 grad_g_pan <-  jacobian(g_pan, benchmarkPRI.1$coef)
@@ -291,5 +295,106 @@ stargazer(coeftest(benchmarkPRI.1, covBMpri), coeftest(benchmarkPRD.1, covBMprd)
                                "IZTAPALAPA" , "MAGDALENA CONTRERAS" , "MIGUEL HIDALGO" , "MILPA ALTA" , "TLAHUAC" , "TLALPAN" , "VENUSTIANO CARRANZA" , "XOCHIMILCO"))
 
 
+```
+
+## Table 2
+```{r}
+BM<-matrix(NA,6,4)
+
+for(j in 1:4){
+  BM[1,j]<-specify_decimal(slopesBM[1,j], 3)
+  BM[2,j]<-paste("(",specify_decimal(seBM[1,j], 3),")", sep="")
+  BM[3,j]<-specify_decimal(slopesBM[2,j], 3)
+  BM[4,j]<-paste("(",specify_decimal(seBM[2,j], 3),")", sep="")
+  BM[5,j]<-specify_decimal(slopesBM[3,j], 3)
+  BM[6,j]<-paste("(",specify_decimal(seBM[3,j], 3),")", sep="")
+}
+
+xtable(BM)
+```
+
+## Figure 2
+```{r}
+####Predicted vote shares in PRD Mobilized Strongholds
+
+g <- glm(EPNa ~ proximity*PRIstr*highTURNOUT+proximity*PRDstr*highTURNOUT+proximity*PANstr*highTURNOUT+     
+           PRI09a+PRD09a+PAN09a+PART09+
+           lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+           EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+           PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+           PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+           CAR+CELULAR+INTERNET+
+           id_mun, data=data, family = 'gaussian')
+
+at.prox <- seq(1/20, 1/2.5, 1/1000)
+marg<-marg(mod = g, var_interest = c("proximity"), type = 'levels', data=data[data$PRDstr==1 & data$highTURNOUT==1,],
+           at_var_interest = seq(1/20, 1/2.5, 1/1000),  cofint=.95)
+
+#getting confidence intervals for the expected PN turnout in PRD strongholds
+mean <- marg[[1]]$Margin
+upper <- marg[[1]]$'Lower CI (95%)'
+lower <- marg[[1]]$'Upper CI (95%)'
+
+dataPRI<-data.frame(cbind(at.prox, mean, upper, lower))
+dataPRI$distance<-(1/dataPRI$at.prox)
+
+
+#same for AMLO
+g <- glm(AMLOa ~ proximity*PRIstr*highTURNOUT+proximity*PRDstr*highTURNOUT+proximity*PANstr*highTURNOUT+     
+           PRI09a+PRD09a+PAN09a+PART09+
+           lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+           EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+           PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+           PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+           CAR+CELULAR+INTERNET+
+           id_mun, data=data, family = 'gaussian')
+
+marg<-marg(mod = g, var_interest = c("proximity"), type = 'levels', data=data[data$PRDstr==1 & data$highTURNOUT==1,],
+           at_var_interest = seq(1/20, 1/2.5, 1/1000), cofint=.95)
+
+mean <- marg[[1]]$Margin
+upper <- marg[[1]]$'Lower CI (95%)'
+lower <- marg[[1]]$'Upper CI (95%)'
+
+dataPRD<-data.frame(cbind(at.prox, mean, upper, lower))
+dataPRD$distance<-(1/dataPRD$at.prox)
+
+
+g <- glm(JVMa ~ proximity*PRIstr*highTURNOUT+proximity*PRDstr*highTURNOUT+proximity*PANstr*highTURNOUT+     
+           PRI09a+PRD09a+PAN09a+PART09+
+           lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+           EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+           PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+           PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+           CAR+CELULAR+INTERNET+
+           id_mun, data=data, family = 'gaussian')
+
+marg<-marg(mod = g, var_interest = c("proximity"), type = 'levels', data=data[data$PRDstr==1 & data$highTURNOUT==1,],
+           at_var_interest = seq(1/20, 1/2.5, 1/1000),cofint=.95)
+
+mean <- marg[[1]]$Margin
+upper <- marg[[1]]$'Lower CI (95%)'
+lower <- marg[[1]]$'Upper CI (95%)'
+
+dataPAN<-data.frame(cbind(at.prox, mean, upper, lower))
+dataPAN$distance<-(1/dataPAN$at.prox)
+
+datasim<-data.frame(rbind(dataPRI, dataPRD, dataPAN))
+
+datasim$dv<-NA
+datasim$dv[1:351]<-"Peña Nieto"
+datasim$dv[352:702]<-"López Obrador"
+datasim$dv[703:1053]<-"Vázquez Mota"
+
+ggplot()+
+  geom_line(data=datasim, aes(x=distance, y=mean,  linetype=dv))+
+  geom_ribbon(data=datasim, aes(x=distance,  ymin=lower, ymax=upper, fill=dv),  alpha=0.5)+theme_bw()+
+  ylab("Predicted vote shares (%)")+
+  xlab("Distance to Soriana (km)")+xlim(2.5,20)+ylim(0,50)+ 
+  scale_fill_manual(values = c("#F0E442","red", "deepskyblue2"), name="")+
+  scale_linetype_manual(values=c("solid", "longdash","dotted"), name="" )+
+  theme(axis.text=element_text(size=18),
+        axis.title=element_text(size=18),
+        legend.text = element_text(size = 18))
 ```
 
