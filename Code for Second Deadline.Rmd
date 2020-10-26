@@ -18,6 +18,7 @@ library(multiwayvcov)
 library(numDeriv)
 library(interplot)
 library(modmarg)
+library(tidyverse)
 
 load("datawork.RData")
 ```
@@ -296,6 +297,142 @@ stargazer(coeftest(benchmarkPRI.1, covBMpri), coeftest(benchmarkPRD.1, covBMprd)
 
 
 ```
+
+
+Re-doing Table 1 using simulation/how shown in Section 7:
+```{r}
+#regressing different parties on proximity to soriana store 
+benchmarkPRI.1 <- lm( EPNa ~ proximity*PRIstr*highTURNOUT+proximity*PRDstr*highTURNOUT+proximity*PANstr*highTURNOUT+     
+                         PRI09a+PRD09a+PAN09a+PART09+
+                         lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+                         EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+                         PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+                         PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+                         CAR+CELULAR+INTERNET+
+                         id_mun, data=data, x=TRUE, y=TRUE)
+
+benchmarkPRD.1 <- lm( AMLOa ~ proximity*PRIstr*highTURNOUT+proximity*PRDstr*highTURNOUT+proximity*PANstr*highTURNOUT+     
+                         PRI09a+PRD09a+PAN09a+PART09+
+                         lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+                         EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+                         PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+                         PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+                         CAR+CELULAR+INTERNET+
+                         id_mun, data=data, x=TRUE, y=TRUE)
+
+benchmarkPAN.1 <- lm( JVMa ~ proximity*PRIstr*highTURNOUT+proximity*PRDstr*highTURNOUT+proximity*PANstr*highTURNOUT+     
+                         PRI09a+PRD09a+PAN09a+PART09+
+                         lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+                         EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+                         PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+                         PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+                         CAR+CELULAR+INTERNET+
+                         id_mun, data=data, x=TRUE, y=TRUE)
+
+benchmarkPART.1 <- lm( PART ~ proximity*PRIstr*highTURNOUT+proximity*PRDstr*highTURNOUT+proximity*PANstr*highTURNOUT+     
+                          PRI09a+PRD09a+PAN09a+PART09+
+                          lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+                          EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+                          PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+                          PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+                          CAR+CELULAR+INTERNET+
+                          id_mun, data=data, x=TRUE, y=TRUE)
+```
+
+
+Simulation: 
+```{r}
+sim_coeff <- function(coeff, vcov){
+  return(mvtnorm::rmvnorm(1, mean = coeff, sigma = vcov))
+}
+```
+
+```{r}
+prox <- seq(0, 100, by = .5)
+
+data %>%
+  summarise(proximity = median(proximity), PRIstr = median(PRIstr ), highTURNOUT = median(highTURNOUT), PRDstr = median(PRDstr),PANstr = median(PANstr), PRI09a = median(PRI09a), PRD09a = median(PRD09a), PAN09a= median(PAN09a), PART09= median(PART09),
+                          lnpop= median(lnpop), P18= median(P18), P65= median(P65), area= median(area), density= median(density), INDIGENOUS= median(INDIGENOUS), CATHOLIC= median(CATHOLIC), NONRELIGIOUS= median(NONRELIGIOUS),
+                          EDUCATION= median(EDUCATION), POSTEDUC= median(POSTEDUC), ILLITERACY= median(ILLITERACY), PROM_HNV= median(PROM_HNV),
+                          PEAprop= median(PEAprop), PEAfemale= median(PEAfemale), NOINSURANCE= median(NOINSURANCE), FEMALEJEFA= median(FEMALEJEFA),
+                          PERROOM= median(PERROOM),DIRTFLOOR= median(DIRTFLOOR),SERVICES= median(SERVICES) ,NO_SERVICES = median(NO_SERVICES),
+                          CAR= median(CAR),CELULAR= median(CELULAR),INTERNET= median(INTERNET)
+)-> med 
+```
+
+
+```{r}
+
+tibble(PRIstr = rep(med$PRIstr, length (prox)), 
+       highTURNOUT= rep(med$highTURNOUT, length (prox)), 
+       PRDstr= rep(med$PRDstr, length (prox)), 
+       PANstr= rep(med$PANstr, length (prox)), 
+       PRI09a= rep(med$PRI09a, length (prox)), 
+       PAN09a= rep(med$PAN09a, length (prox)),
+       PART09= rep(med$PART09, length (prox)),
+       PRD09a= rep(med$PRD09a, length (prox)),
+       lnpop= rep(med$lnpop, length (prox)),
+       P18= rep(med$P18, length (prox)),
+       P65= rep(med$P65, length (prox)),
+     area= rep(med$area, length (prox)),
+     density= rep(med$density, length (prox)),
+     INDIGENOUS= rep(med$INDIGENOUS, length (prox)),
+     CATHOLIC= rep(med$CATHOLIC, length (prox)),
+     NONRELIGIOUS = rep(med$NONRELIGIOUS, length (prox)),
+      EDUCATION = rep( med$EDUCATION, length (prox)),
+              POSTEDUC = rep(med$POSTEDUC, length (prox)),
+               ILLITERACY = rep(med$ILLITERACY, length (prox)),
+               PROM_HNV = rep(med$PROM_HNV , length (prox)),
+                 PEAprop= rep(med$PEAprop , length (prox)),
+                  PEAfemale = rep(med$PEAfemale , length (prox)),
+                 NOINSURANCE = rep(med$NOINSURANCE , length (prox)),
+                   FEMALEJEFA = rep(med$FEMALEJEFA, length (prox)),
+                     PERROOM= rep( med$PERROOM, length (prox)),   
+    DIRTFLOOR= rep(med$DIRTFLOOR, length (prox)),                   
+       SERVICES= rep(med$SERVICES, length (prox)),   
+  NO_SERVICES= rep(med$NO_SERVICES, length (prox)),   
+     CAR= rep(med$CAR, length (prox)),   
+CELULAR= rep(med$CELULAR, length (prox)),   
+INTERNET= rep(med$INTERNET, length (prox)),   
+) %>% 
+  arrange(PRIstr, highTURNOUT, PRDstr, PANstr, PRI09a, PRD09a, PAN09a, PART09,
+                          lnpop, P18, P65, area, density, INDIGENOUS, CATHOLIC, NONRELIGIOUS,
+                          EDUCATION, POSTEDUC, ILLITERACY, PROM_HNV,
+                          PEAprop, PEAfemale, NOINSURANCE, FEMALEJEFA,
+                          PERROOM,DIRTFLOOR,SERVICES,NO_SERVICES,
+                          CAR,CELULAR,INTERNET) -> data_sim
+```
+
+
+```{r}
+#simulating coefficients from lm
+coeff_sim <- sim_coeff(benchmarkPRI.1$coefficients, vcov(benchmarkPRI.1))
+```
+
+Really not sure on this... something is breaking down in the matrix multiplication.
+```{r}
+#simulating y and calculating the QOI 
+sim_E <- function(data_sim, coeff_sim){
+  mu <- mean(coeff_sim)
+  sd <- sqrt(var(coeff_sim))
+  Xbeta <- cbind(1, as.matrix(data_sim)) %*% as.matrix(coeff_sim)
+  Y <- Xbeta + rnorm(length(prox), mean = mu, sd = sd)
+}
+```
+
+
+```{r}
+sim_run <- function(fit, data_sim){
+  coeff_sim <- sim_coeff(fit$coefficients, vcov(fit))
+  EY_sim <- sim_E(data_sim, coeff_sim)
+  return(EY_sim)
+}
+
+sim_run(benchmarkPRI.1, data_sim)
+```
+
+
+
 
 ## Table 2
 ```{r}
