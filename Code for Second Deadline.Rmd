@@ -19,13 +19,242 @@ library(numDeriv)
 library(interplot)
 library(modmarg)
 library(tidyverse)
+library(stats)
+library(haven)
+library(systemfit)
+library(nnet)
 
 load("datawork.RData")
 ```
 
 # Replication of Figure 1 (Chengyu)
 
+```{r data_figure_1}
 
+base <- read_stata("./rawdata/Base nacional de la ENVUD para trabajar por estado.dta")
+
+base_2 <- base[base$estado == 9 | base$estado == 15,]
+
+base_2$sectionID <- paste(base_2$estado, base_2$seccion, sep = " _ ")
+
+precinct <- read_stata("./rawdata/precinctdata.dta")
+
+base_3 <- merge(base_2, precinct, by = "sectionID")
+
+base_3$gender <- base_3$genero
+base_3$age <- base_3$edad
+base_3$sec <- base_3$P15
+
+base_3[base_3$sec==0,]$sec <- 0.6
+
+#30b.- (SI DICE SÍ) ¿A cuántos grupos u organizaciones de ese tipo pertenece usted? (ANOTAR EL NUMERO DIRECTO; 0=NINGUNO; 99=NS/NC)
+base_3$belongparty <- base_3$'P30_4'
+base_3$belongunion <- base_3$'P30_5'
+base_3$belongreligiousgroup <- base_3$'P30_7'
+
+base_3[base_3$belongparty==0,]$belongparty <- NA
+base_3[base_3$belongunion==0,]$belongunion <- NA
+base_3[base_3$belongreligiousgroup==0,]$belongreligiousgroup <- NA
+
+base_3[base_3$belongparty %in% 2,]$belongparty <- 0
+base_3[base_3$belongunion %in% 2,]$belongunion <- 0
+base_3[base_3$belongreligiousgroup %in% 2,]$belongreligiousgroup <- 0
+
+#44.- (TARJETA 11) En una escala del 1 al 10, donde 1 significa “nada” y 10 “mucho”. ¿A usted...? (LEER) (0=NS/NC)
+#a. Cuánto le interesa la política
+base_3$interestpolitics <- base_3$P44_1
+#c. Cuánto participa usted en las elecciones
+base_3$interestelections <- base_3$P44_2
+#e. Cuánto habla usted de asuntos políticos con otras personas
+base_3$discusspolitics <- base_3$P44_5
+#d. Cuánto sigue las noticias sobre política y gobierno
+base_3$follownews <- base_3$P44_4
+
+#54.- En general, ¿usted aprueba o desaprueba la forma como está haciendo su trabajo...? (1= Aprueba; 2=Desaprueba; 0=NS/NC)
+base_3$presidentialapp <- base_3$P54_1
+base_3$govapp <- base_3$P54_2
+base_3$congressapp <- base_3$P54_4
+
+base_3[base_3$presidentialapp==0,]$presidentialapp <- NA
+base_3[base_3$govapp==0,]$govapp <- NA
+base_3[base_3$congressapp==0,]$congressapp <- NA
+
+base_3[base_3$presidentialapp %in% 2,]$presidentialapp <- 0
+base_3[base_3$govapp %in% 2,]$govapp <- 0
+base_3[base_3$congressapp %in% 2,]$congressapp <- 0
+
+#87.- Generalmente, ¿usted se considera priísta, panista o perredista? (INSISTIR) ¿Muy (PRIISTA / PANISTA / PERREDISTA) o algo (PRIISTA / PANISTA /PERREDISTA)? (NS/NC=0)
+base_3$partyid <- base_3$P87
+base_3$pri <- ifelse(base_3$partyid == 1 | base_3$partyid == 2, 1, 0)
+base_3$pan <- ifelse(base_3$partyid == 3 | base_3$partyid == 4, 1, 0)
+base_3$prd <- ifelse(base_3$partyid == 5 | base_3$partyid == 6, 1, 0)
+
+base_3$partyid <- ifelse(base_3$P87 == 1 | base_3$P87 == 2, 1, ifelse(base_3$P87 == 3 | base_3$P87 == 4, 2, ifelse(base_3$P87 == 5 | base_3$P87 == 6, 3, 0)))
+
+base_3$education <-  ifelse(base_3$P104 == 1, 0, ifelse(base_3$P104 == 2, 1, ifelse(base_3$P104 == 3, 2, ifelse(base_3$P104 == 4 | base_3$P104 == 5, 3, ifelse(base_3$P104 == 6 | base_3$P104 == 7, 4, ifelse(base_3$P104 == 8, 5, ifelse(base_3$P104 == 9, 6, NA)))))))
+
+base_3$cellphone <-  ifelse(base_3$P112_2 == 3, NA, base_3$P112_2)
+
+base_3$internet <-  ifelse(base_3$P112_3 == 3, NA, base_3$P112_3)
+
+# Consider replicate by distance, not prox
+base_3$prox <- 1/base_3$distance
+
+base_3$munID <- as.numeric(paste(base_3$estado, base_3$municipio, sep = ""))
+
+```
+
+```{r model_figure_1}
+
+# I use multinom from nnet here
+# Is constant term needed?
+m1_3_multinom <- multinom(partyid ~ prox+edad+gender+education+sec+cellphone+internet+localidae, data = base_3)
+
+summary(m1_3_multinom)
+
+formula_presi <- presidentialapp ~ prox+edad+gender+education+sec+cellphone+internet+localidae
+m4_presi <- glm(formula_presi, data = base_3, family = "binomial")
+
+summary(m4_presi)
+
+formula_gov <- govapp ~ prox+edad+gender+education+sec+cellphone+internet+localidae
+m5_gov <- glm(formula_gov, data = base_3, family = "binomial")
+
+summary(m5_gov)
+
+formula_congress <- congressapp ~ prox+edad+gender+education+sec+cellphone+internet+localidae
+m6_congress <- glm(formula_congress, data = base_3, family = "binomial")
+
+summary(m6_congress)
+
+# Seemingly Unrelated Regression by systemfit
+# which result to trust, single regress or SUR?
+
+sur_part1 <- systemfit(list(presi = formula_presi, gov = formula_gov, congress = formula_congress), method = "SUR", data = base_3)
+
+summary(sur_part1)
+
+formula_party <- belongparty ~ prox+edad+gender+education+sec+cellphone+internet+localidae
+m7_party <- glm(formula_party, data = base_3, family = "binomial")
+
+summary(m7_party)
+
+formula_union <- belongunion ~ prox+edad+gender+education+sec+cellphone+internet+localidae
+m8_union <- glm(formula_union, data = base_3, family = "binomial")
+
+summary(m8_union)
+
+formula_reli <- belongreligiousgroup ~ prox+edad+gender+education+sec+cellphone+internet+localidae
+m9_reli <- glm(formula_reli, data = base_3, family = "binomial")
+
+summary(m9_reli)
+
+# Seemingly Unrelated Regression by systemfit
+# which result to trust, single regress or SUR?
+
+sur_part2 <- systemfit(list(party = formula_party, union = formula_union, reli = formula_reli), data = base_3)
+
+summary(sur_part2)
+
+# The last four formula are purely estimated by SUR
+# Maybe replicate by regressing all formula separately?
+
+formula_interestpoli <- interestpolitics ~ prox+edad+gender+education+sec+cellphone+internet+localidae
+
+formula_interestelec <- interestelections ~ prox+edad+gender+education+sec+cellphone+internet+localidae
+
+formula_discuss <- discusspolitics ~ prox+edad+gender+education+sec+cellphone+internet+localidae
+
+formula_follow <- follownews ~ prox+edad+gender+education+sec+cellphone+internet+localidae
+
+sur_part3 <- systemfit(list(interestpoli = formula_interestpoli, interestelec = formula_interestelec, discuss = formula_discuss, follow = formula_follow), data = base_3)
+
+summary(sur_part3)
+
+```
+
+I rewrite the Stata code to R here, and compare the results in R, Stata, and in the paper. 
+
+First, for the binomial and multinomial models (i.e., models starting with "m"), the R and Stata replication results are generally the same.
+
+Second, the coefficients for "prox" in the replications' binomial and multinomial models are slightly different from those in the original paper. For instance, the coefficients for party IDs (i.e., the first three lines) are -0.053, 0.013, and -0.102 in Table B.2 in the paper's appendix. However, R and Stata replication generates -0.055, 0.019, and -0.102 separately. 
+
+Third, the significance of the Figure 1's results generally remain the same in replications.
+
+Fourth, the Seemingly Unrelated Regression (SUR) results are quite different in R and Stata. Although still non-significant, the coefficients differ a lot. I attach all coefficients (in the paper and in the R replication) below.
+
+```{r graph_figure_1}
+
+results <- read.table(header=T, con <- textConnection('
+IV	Coefficient	StdError Coef_repli SE_repli	Model	Included	Variable Order
+Proximity	-0.052	0.100	-0.055 0.101 1	1	PRI 13
+Proximity  0.013	0.127	0.019 0.127 1	1	PAN 12
+Proximity  -0.102  0.140	-0.102 0.141 1	1	PRD 11
+Proximity  0.074	0.071	0.018 0.017 2	1	"President\'s Approval" 10
+Proximity  -0.090	0.074	-0.023 0.017 2	1	"Governor\'s Approval" 9
+Proximity  -0.039  0.073	0.008 0.016 2	1	"Congress\'s Approval" 8
+Proximity  -0.546  0.398	-0.004 0.005 3	1	"Party Member" 7
+Proximity  -0.047	0.147	-0.001 0.005 3	1	"Union Member" 6
+Proximity  0.055  0.145	0.002 0.008 3	1	"Religious group member" 5
+Proximity  -0.017  0.086  -0.015 0.086 4	1	"Interest in politics" 4
+Proximity  -0.087	0.078	-0.081 0.079 4	1	"Interest in elections" 3
+Proximity  0.105 0.080	0.109 0.081 4	1	"Talks about politcs" 2
+Proximity  0.014  0.085  0.015 0.085 4	1	"Follows news" 1
+'))
+close(con)
+
+results$min<-results$Coefficient-(1.96*results$StdError)
+results$max<-results$Coefficient+(1.96*results$StdError)
+results$Color[results$Included==1]<-"black"
+results$Color[results$Included==0]<-"white"
+
+results$Model[results$Model==1]<-"1. Party ID"
+results$Model[results$Model==2]<-"2. Approval"
+results$Model[results$Model==3]<-"3. Membership"
+results$Model[results$Model==4]<-"4. Political Awareness"
+
+results$Variable <- factor(results$Variable, levels=results$Variable[order(results$Order)])
+
+results$min_repli<-results$Coef_repli-(1.96*results$SE_repli)
+results$max_repli<-results$Coef_repli+(1.96*results$SE_repli)
+
+# a is the figure 1 with original data; I am still trying to combine them into one # so that comparison is possible
+a<-ggplot(results, aes(y=reorder(Variable, Order), x = Coefficient)) +
+#  scale_colour_gradient(low="white", high="black")+
+  geom_point(size=3) +
+  facet_grid( ~ Model)+
+  geom_errorbarh(aes(xmin=min, xmax=max),  height = 0) +
+  geom_vline(xintercept = 0, linetype=2, color="red") +
+  labs( x = "Coefficients", y = "Variable") +
+  theme_bw()+
+  theme(
+    axis.title.x = element_text(face="bold", size=18),
+    axis.title.y = element_text(face="bold", size=18, angle=90),
+    axis.text.x  = element_text( size=16),
+    strip.text.x = element_text(size=16),
+    axis.text.y  = element_text( size=18))
+
+a
+
+# b is the figure 1 with replicated data
+b<-ggplot(results, aes(y=reorder(Variable, Order), x = Coef_repli)) +
+#  scale_colour_gradient(low="white", high="black")+
+  geom_point(size=3) +
+  facet_grid( ~ Model)+
+  geom_errorbarh(aes(xmin=min_repli, xmax=max_repli), color = "blue")+
+  geom_vline(xintercept = 0, linetype=2, color="red") +
+  labs( x = "Coefficients", y = "Variable") +
+  theme_bw()+
+  theme(
+    axis.title.x = element_text(face="bold", size=18),
+    axis.title.y = element_text(face="bold", size=18, angle=90),
+    axis.text.x  = element_text( size=16),
+    strip.text.x = element_text(size=16),
+    axis.text.y  = element_text( size=18))
+
+b
+
+```
 # Replication of Table 1 (Frances)
 
 I've mostly annotated and re-run the pre-existing code. I plan to go *back* through and re-do as simulations similar to how we were shown in section.
