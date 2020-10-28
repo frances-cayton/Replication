@@ -272,6 +272,7 @@ specify_decimal <- function(x, k) {format(round(x, k), nsmall = k)}
 
 These are models creating benchmark OLS estimates for proximity to Soriana stores on vote share:  
 
+
 ```{r}
 #regressing different parties on proximity to soriana store 
 robustness1 <- ols(proximity ~ PRI06 +PRD06+PAN06+PART06, data= data, x= TRUE, y= TRUE)
@@ -309,7 +310,7 @@ robustness4 <- ols( proximity ~
 
 
 This creates a table of covariates
-
+#Molly: I'm getting this error for the below: Error in h(simpleError(msg, call)) : error in evaluating the argument 'x' in selecting a method for function 'mean': $ operator is invalid for atomic vectors
 ```{r}
 stargazer(robustness1, robustness2, robustness3, robustness4, star.cutoffs = c(0.05, 0.01, 0.001), style = "qje", digits=3,
           covariate.labels = c("PRI 2006", "PRD2006", "PAN2006", "Turnout 2006","Population Log", "Population over 18 ",
@@ -512,6 +513,8 @@ seBM[3,4]<-sqrt(grad_g_pan%*% covBMpart %*% t(grad_g_pan))
 ```
 
 Table 1: 
+
+#Molly: getting this error: the condition has length > 1 and only the first element will be usedthe condition has length > 1 and only the first element will be usedlength of NULL cannot be changedlength of NULL cannot be changedlength of NULL cannot be changedlength of NULL cannot be changedlength of NULL cannot be changed
 ```{r}
 stargazer(coeftest(benchmarkPRI.1, covBMpri), coeftest(benchmarkPRD.1, covBMprd), coeftest(benchmarkPAN.1, covBMpan), coeftest(benchmarkPART.1, covBMpart),style = "qje", star.cutoffs = c(0.05, 0.01, 0.001), digits=3,
           covariate.labels = c("Proximity", "PRI stronghold", "High Mobilization", "PRD stronghold","PAN stronghold", "PRI 2009", "PRD2009", "PAN2009", "Turnout 2009", "Population Log", "Population over 18 ",
@@ -769,7 +772,7 @@ ggplot()+
         legend.text = element_text(size = 18))
 ```
 
-## Table 3: Estimation of the Effects (this doesn't produce a table)
+## Table 3: Estimation of the Effects (this still doesn't produce a table)
 ```{r}
 g <- glm(EPNa ~ proximity*PRIstr*highTURNOUT+proximity*PRDstr*highTURNOUT+proximity*PANstr*highTURNOUT+     
            PRI09a+PRD09a+PAN09a+PART09+
@@ -943,7 +946,7 @@ ggplot(results, aes(y=Model, x = Coefficient, shape=Stronghold, color=Stronghold
 ```
 
 ## Figure 4
-# still working on this
+#Molly: object 'distance' not found
 ```{r}
 rm(list=ls(all=TRUE))
 library(foreign)
@@ -967,7 +970,7 @@ library(interplot)
 #data<-read.dta("datawork.dta")
 #data<-data[data$distance<=20,]
 
-data <- load("~/Documents/GitHub/Replication/Replication/datawork.RData")
+#data <- load("~/Documents/GitHub/Replication/Replication/datawork.RData")
  subset(data, distance <= 20)
 #Finding centroids for each Polygon
 centroids<-data[,c("centroidLONG","centroidLAT")]
