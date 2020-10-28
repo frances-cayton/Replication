@@ -23,7 +23,10 @@ library(stats)
 library(haven)
 library(systemfit)
 library(nnet)
+```
 
+
+```{r}
 load("datawork.RData")
 ```
 
@@ -591,7 +594,6 @@ data %>%
 
 
 ```{r}
-
 tibble(PRIstr = rep(med$PRIstr, length (prox)), 
        highTURNOUT= rep(med$highTURNOUT, length (prox)), 
        PRDstr= rep(med$PRDstr, length (prox)), 
@@ -622,7 +624,7 @@ tibble(PRIstr = rep(med$PRIstr, length (prox)),
   NO_SERVICES= rep(med$NO_SERVICES, length (prox)),   
      CAR= rep(med$CAR, length (prox)),   
 CELULAR= rep(med$CELULAR, length (prox)),   
-INTERNET= rep(med$INTERNET, length (prox)),   
+INTERNET= rep(med$INTERNET, length (prox)),  
 ) %>% 
   arrange(PRIstr, highTURNOUT, PRDstr, PANstr, PRI09a, PRD09a, PAN09a, PART09,
                           lnpop, P18, P65, area, density, INDIGENOUS, CATHOLIC, NONRELIGIOUS,
@@ -630,6 +632,9 @@ INTERNET= rep(med$INTERNET, length (prox)),
                           PEAprop, PEAfemale, NOINSURANCE, FEMALEJEFA,
                           PERROOM,DIRTFLOOR,SERVICES,NO_SERVICES,
                           CAR,CELULAR,INTERNET) -> data_sim
+```
+```{r}
+head(data_sim)
 ```
 
 
@@ -803,7 +808,7 @@ g <- glm(AMLOa ~ proximity*PRIstr*highTURNOUT+proximity*PRDstr*highTURNOUT+proxi
            CAR+CELULAR+INTERNET+
            id_mun, data=data, family = 'gaussian')
 
-marg<-marg(mod = g, var_interest = c("proximity"), type = 'levels', data=data[data$PRDstr==1 & data$highTURNOUT==1,],
+marg <-marg(mod = g, var_interest = c("proximity"), type = 'levels', data=data[data$PRDstr==1 & data$highTURNOUT==1,],
            at_var_interest = c(1/15, 1/2.5))
 
 
@@ -853,7 +858,7 @@ Stronghold DV	Coefficient	StdError	Model	 Order
 results$min<-results$Coefficient-(1.96*results$StdError)
 results$max<-results$Coefficient+(1.96*results$StdError)
 
-results$Model <- factor(results$Model) #, levels=results$Model[order(results$Order)])
+results$Model <- factor(results$Model) # , levels=results$Model[order(results$Order)])
 
 
 
@@ -962,9 +967,8 @@ library(interplot)
 #data<-read.dta("datawork.dta")
 #data<-data[data$distance<=20,]
 
-data<-load("datawork.RData")
-data <- data[distance<=20,]
-
+data <- load("~/Documents/GitHub/Replication/Replication/datawork.RData")
+ subset(data, distance <= 20)
 #Finding centroids for each Polygon
 centroids<-data[,c("centroidLONG","centroidLAT")]
 coordinates(centroids) <- ~ centroidLONG + centroidLAT
@@ -972,7 +976,8 @@ centroids<-as.matrix(data.frame(centroids))
 
 
 #Loading Soriana Information
-sorianas<-read.dta('/rawdata/Coordenadas4Tiendas.dta')
+library(haven)
+sorianas<- read_dta("rawdata/Coordenadas4Tiendas.dta")
 coordinates(sorianas) <- ~ longitude + latitude
 sorianas<-as.matrix(data.frame(sorianas))
 
