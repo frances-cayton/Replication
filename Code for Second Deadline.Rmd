@@ -942,9 +942,11 @@ for(i in 1:nrow(centroids)){
   distancesstores<-  matrix(gdist(centroids[i,1],centroids[i,2], a[,2],a[,1], units = "km"))
   min[i]<-min(distancesstores, na.rm=TRUE)
 }
-  
+}
+```
 
 
+```{r}
 data$placebodist<-min
 data$placeboprox<-1/data$placebodist
 
