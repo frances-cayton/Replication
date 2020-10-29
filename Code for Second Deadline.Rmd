@@ -258,6 +258,76 @@ b<-ggplot(results, aes(y=reorder(Variable, Order), x = Coef_repli)) +
 b
 
 ```
+
+Below is a replication part (replacing proximity with distance) of Figure 1, testing the assumption that distance to the supermarket does not correlate with political attitudes and political behaviors.
+
+```{r repli_model_figure_1}
+
+rep_m1_3_multinom <- multinom(partyid ~ distance+edad+gender+education+sec+cellphone+internet+localidae, data = base_3)
+
+summary(rep_m1_3_multinom)
+
+rep_formula_presi <- presidentialapp ~ distance+edad+gender+education+sec+cellphone+internet+localidae
+rep_m4_presi <- glm(rep_formula_presi, data = base_3, family = "binomial")
+
+summary(rep_m4_presi)
+
+rep_formula_gov <- govapp ~ distance+edad+gender+education+sec+cellphone+internet+localidae
+rep_m5_gov <- glm(rep_formula_gov, data = base_3, family = "binomial")
+
+summary(rep_m5_gov)
+
+rep_formula_congress <- congressapp ~ distance+edad+gender+education+sec+cellphone+internet+localidae
+rep_m6_congress <- glm(rep_formula_congress, data = base_3, family = "binomial")
+
+summary(rep_m6_congress)
+
+# Seemingly Unrelated Regression by systemfit
+# which result to trust, single regress or SUR?
+
+rep_sur_part1 <- systemfit(list(presi = rep_formula_presi, gov = rep_formula_gov, congress = rep_formula_congress), method = "SUR", data = base_3)
+
+summary(rep_sur_part1)
+
+rep_formula_party <- belongparty ~ distance+edad+gender+education+sec+cellphone+internet+localidae
+rep_m7_party <- glm(rep_formula_party, data = base_3, family = "binomial")
+
+summary(rep_m7_party)
+
+rep_formula_union <- belongunion ~ distance+edad+gender+education+sec+cellphone+internet+localidae
+rep_m8_union <- glm(rep_formula_union, data = base_3, family = "binomial")
+
+summary(rep_m8_union)
+
+rep_formula_reli <- belongreligiousgroup ~ distance+edad+gender+education+sec+cellphone+internet+localidae
+rep_m9_reli <- glm(rep_formula_reli, data = base_3, family = "binomial")
+
+summary(rep_m9_reli)
+
+# Seemingly Unrelated Regression by systemfit
+# which result to trust, single regress or SUR?
+
+rep_sur_part2 <- systemfit(list(party = rep_formula_party, union = rep_formula_union, reli = rep_formula_reli), data = base_3)
+
+summary(rep_sur_part2)
+
+# The last four formula are purely estimated by SUR
+# Maybe replicate by regressing all formula separately?
+
+rep_formula_interestpoli <- interestpolitics ~ distance+edad+gender+education+sec+cellphone+internet+localidae
+
+rep_formula_interestelec <- interestelections ~ distance+edad+gender+education+sec+cellphone+internet+localidae
+
+rep_formula_discuss <- discusspolitics ~ distance+edad+gender+education+sec+cellphone+internet+localidae
+
+rep_formula_follow <- follownews ~ distance+edad+gender+education+sec+cellphone+internet+localidae
+
+rep_sur_part3 <- systemfit(list(interestpoli = rep_formula_interestpoli, interestelec = rep_formula_interestelec, discuss = rep_formula_discuss, follow = rep_formula_follow), data = base_3)
+
+summary(rep_sur_part3)
+
+```
+
 # Replication of Table 1 (Frances)
 
 I've mostly annotated and re-run the pre-existing code. I plan to go *back* through and re-do as simulations similar to how we were shown in section.
