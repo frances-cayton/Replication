@@ -22,7 +22,12 @@ library(haven)
 library(systemfit)
 library(nnet)
 library(sjmisc)
+library(maptools)
+library(rgeos)
+library(Imap)
+library(spatstat)
 ```
+
 
 
 ```{r}
@@ -330,9 +335,6 @@ summary(rep_sur_part3)
 ```
 
 # Replication of Table 1 (Frances)
->>>>>>> d54121309d5c4777fc1524bb797109d6f83c2bca
-
-# Replication of Table 1 (Frances)
 
 ```{r}
 data <- table
@@ -626,6 +628,24 @@ for(j in 1:4){
 xtable(BM)
 ```
 
+Latex code for the table: 
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{rllll}
+  \hline
+ & 1 & 2 & 3 & 4 \\ 
+  \hline
+1 & -0.166 & -0.001 & -0.024 & -0.195 \\ 
+  2 & (2.480) & (4.010) & (2.202) & (1.805) \\ 
+  3 & 17.452 & -6.768 & -4.229 & 4.305 \\ 
+  4 & (1.952) & (2.952) & (1.460) & (1.457) \\ 
+  5 & -3.678 & -5.870 & 5.425 & -4.469 \\ 
+  6 & (2.031) & (3.001) & (1.678) & (1.515) \\ 
+   \hline
+\end{tabular}
+\end{table}
+
 ## Figure 2
 ```{r}
 ####Predicted vote shares in PRD Mobilized Strongholds
@@ -886,51 +906,34 @@ ggplot(results, aes(y=Model, x = Coefficient, shape=Stronghold, color=Stronghold
 
 ## Figure 4
 # still working on this
+I removed the package reload and the data file, as they are already loaded in at the top of the doc (and sometimes my R gets finick-y with loading packages... so really just seeing if this is the problem). Also breaking it into smaller chunks to try and trouble shoot where the problem is! - Frances
 ```{r}
-rm(list=ls(all=TRUE))
-library(foreign)
-library(ggplot2)
-library(stargazer)
-library(arm)
-library(rms)
-library(msm)
-library(systemfit)
-library(xtable)
-library(maptools)
-library(ggplot2)
-library(rgeos)
-library(Imap)
-library(spatstat)
-library(multiwayvcov)
-library(numDeriv)
-library(interplot)
-
-
-#data<-read.dta("datawork.dta")
-#data<-data[data$distance<=20,]
-
-data <- load("~/Documents/GitHub/Replication/Replication/datawork.RData")
- subset(data, distance <= 20)
+data <- subset(data, distance <= 20)
 #Finding centroids for each Polygon
 centroids<-data[,c("centroidLONG","centroidLAT")]
 coordinates(centroids) <- ~ centroidLONG + centroidLAT
 centroids<-as.matrix(data.frame(centroids))
+```
 
 
+```{r}
 #Loading Soriana Information
 library(haven)
 sorianas<- read_dta("rawdata/Coordenadas4Tiendas.dta")
 coordinates(sorianas) <- ~ longitude + latitude
 sorianas<-as.matrix(data.frame(sorianas))
+```
 
 
+```{r}
 placeboEPNslope<-c()
 placeboEPNse<-c()
 placeboAMLOslope<-c()
 placeboAMLOse<-c()
+```
 
 
-
+```{r}
 for(k in 1:1000){
 rm(a, min, distancesstores, benchmarkPRI.1, benchmarkPRD.1)  
 a<-sorianas[sample(nrow(sorianas),71),]
@@ -940,6 +943,7 @@ for(i in 1:nrow(centroids)){
   min[i]<-min(distancesstores, na.rm=TRUE)
 }
   
+
 
 data$placebodist<-min
 data$placeboprox<-1/data$placebodist
