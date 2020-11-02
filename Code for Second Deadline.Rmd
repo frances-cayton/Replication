@@ -731,7 +731,8 @@ ggplot()+
         legend.text = element_text(size = 18))
 ```
 
-## Table 3: Estimation of the Effects (this doesn't produce a table)
+## Table 3: Effects of the Location of Soriana Stores on Voting Behavior (Molly)
+Regressing proximity and stronghold on EPN voteshare 
 ```{r}
 g <- glm(EPNa ~ proximity*PRIstr*highTURNOUT+proximity*PRDstr*highTURNOUT+proximity*PANstr*highTURNOUT+     
            PRI09a+PRD09a+PAN09a+PART09+
@@ -741,10 +742,14 @@ g <- glm(EPNa ~ proximity*PRIstr*highTURNOUT+proximity*PRDstr*highTURNOUT+proxim
            PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
            CAR+CELULAR+INTERNET+
            id_mun, data=data, family = 'gaussian')
-
+```
+Marg function estimates the predictive effects and levels for variables within a model
+```{r}
 marg<-marg(mod = g, var_interest = c("proximity"), type = 'levels', data=data[data$PRDstr==1 & data$highTURNOUT==1,],
            at_var_interest = c(1/15, 1/2.5))
-
+```
+Estimating the effect on PRI and PRD if all stores were 2.5km 15km away
+```{r}
 #At 15 km
 PRIat15<-c()
 PRIat2.5<-c()
@@ -788,7 +793,12 @@ high<-round(sum((marg[[1]]$`Upper CI (95%)`[2]/100)*data[data$PRDstr==1 & data$h
 mean<-round(sum((marg[[1]]$`Margin`[2]/100)*data[data$PRDstr==1 & data$highTURNOUT==1,]$ln2012))
 
 PRDat2.5<-c(mean-sum(data[data$PRDstr==1 & data$highTURNOUT==1,]$amlo2012), low-sum(data[data$PRDstr==1 & data$highTURNOUT==1,]$amlo2012), high-sum(data[data$PRDstr==1 & data$highTURNOUT==1,]$amlo2012))
+```
+Trying to turn the results into a table--in progress
+```{r}
+results <- as.data.frame(PRIat15, PRIat2.5, PRDat15, PRDat2.5)
 
+xtable(results)
 ```
 
 ## Figure 3
