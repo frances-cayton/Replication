@@ -736,6 +736,10 @@ ggplot()+
 ```
 
 ## Table 3: Effects of the Location of Soriana Stores on Voting Behavior (Molly)
+
+Table 3 is designed to illustrate that the vote-buying effort influenced only voters within a certain proximity. It compares the aggregated votes in PRD strongholds of Pena Nieto, the PRI beneficiary of the vote-buying effort, and Lopez Obrador, the PRD candidate who lost out due to vote buying. It imagines a counterfactual in which all PRD strongholds were either 15km or 2.5 km from the nearest Soriana store. In the paper, the table shows very little effect at 15km, but a much stronger effect at 2.5 km. When we replicated this table, we were unable to reach the same figures.
+
+
 Regressing proximity and stronghold on EPN voteshare 
 ```{r}
 g <- glm(EPNa ~ proximity*PRIstr*highTURNOUT+proximity*PRDstr*highTURNOUT+proximity*PANstr*highTURNOUT+     
@@ -822,7 +826,10 @@ results
 
 
 ## Figure 3: Robustness check and placebo tests
-# I had to edit lines 850 and 855 to make it work
+
+Figure 3 offers on the left, a robustness check, and on the right a placebo test. The robustness check (3A) test the marginal effect of proximity to a Soriana store for proximity in PRD strongholds using three different alternative model specifications. Instead of coding the vote shares the number of registered voters supporting each candidate, the author coded them as the proportion of the total number of votes, the vote share change from 2009 to 2012, and driving proximity. In all of these cases, the marginal effects are similar to the magintudes shown in Table 2. The placebo test (3B) tests for unobserved characteristics in the precints, by applying the replicating the analysis in the following ways: with the dependent variable as the vote shares from the 2006 and 2009 federal elections, with precints outside the State of Mexico and Mexico City, and with proximity to Walmart-Mexico stores instead of Soriana. The effects of these tests are not significantly different from zero.
+
+
 ```{r}
 results <- read.table(header=T, con <- textConnection('
 Stronghold DV	Coefficient	StdError	Model	 Order
