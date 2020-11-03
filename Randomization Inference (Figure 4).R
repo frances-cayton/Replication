@@ -23,8 +23,10 @@ library(numDeriv)
 library(interplot)
 
 
-data<-read.dta("datawork.dta")
-data<-data[data$distance<=20,]
+#data<-read.dta("datawork.dta")
+#data <- load("datawork.RData")
+data <- read_dta("datawork.dta")
+data<-subset(data, distance<=20)
 
 #Finding centroids for each Polygon
 centroids<-data[,c("centroidLONG","centroidLAT")]
@@ -270,4 +272,4 @@ p <- ggplot(placebo, aes(x=placebo))+geom_histogram(binwidth=.5, colour="black",
   axis.title=element_text(size=16),
   strip.text = element_text(size = 16))
 
-
+p
