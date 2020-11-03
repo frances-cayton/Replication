@@ -763,13 +763,20 @@ mean<-round(sum((marg[[1]]$`Margin`[1]/100)*data[data$PRDstr==1 & data$highTURNO
 
 PRIat15<-c(sum(data[data$PRDstr==1 & data$highTURNOUT==1,]$epn2012)-mean, sum(data[data$PRDstr==1 & data$highTURNOUT==1,]$epn2012)-low, sum(data[data$PRDstr==1 & data$highTURNOUT==1,]$epn2012)-high)
 
+PRIat15
+```
+
+```{r}
 low<-round(sum((marg[[1]]$`Lower CI (95%)`[2]/100)*data[data$PRDstr==1 & data$highTURNOUT==1,]$ln2012))
 high<-round(sum((marg[[1]]$`Upper CI (95%)`[2]/100)*data[data$PRDstr==1 & data$highTURNOUT==1,]$ln2012))
 mean<-round(sum((marg[[1]]$`Margin`[2]/100)*data[data$PRDstr==1 & data$highTURNOUT==1,]$ln2012))
 
 PRIat2.5<-c(mean-sum(data[data$PRDstr==1 & data$highTURNOUT==1,]$epn2012), low-sum(data[data$PRDstr==1 & data$highTURNOUT==1,]$epn2012), high-sum(data[data$PRDstr==1 & data$highTURNOUT==1,]$epn2012))
 
+PRIat2.5
+```
 
+```{r}
 g <- glm(AMLOa ~ proximity*PRIstr*highTURNOUT+proximity*PRDstr*highTURNOUT+proximity*PANstr*highTURNOUT+     
            PRI09a+PRD09a+PAN09a+PART09+
            lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
@@ -781,8 +788,9 @@ g <- glm(AMLOa ~ proximity*PRIstr*highTURNOUT+proximity*PRDstr*highTURNOUT+proxi
 
 marg <-marg(mod = g, var_interest = c("proximity"), type = 'levels', data=data[data$PRDstr==1 & data$highTURNOUT==1,],
            at_var_interest = c(1/15, 1/2.5))
+```
 
-
+```{r}
 #At 15 km
 PRDat15<-c()
 PRDat2.5<-c()
@@ -792,18 +800,20 @@ mean<-round(sum((marg[[1]]$`Margin`[1]/100)*data[data$PRDstr==1 & data$highTURNO
 
 PRDat15<-c(mean-sum(data[data$PRDstr==1 & data$highTURNOUT==1,]$amlo2012), low-sum(data[data$PRDstr==1 & data$highTURNOUT==1,]$amlo2012), high-sum(data[data$PRDstr==1 & data$highTURNOUT==1,]$amlo2012))
 
+PRDat15
+```
+
+```{r}
 low<-round(sum((marg[[1]]$`Lower CI (95%)`[2]/100)*data[data$PRDstr==1 & data$highTURNOUT==1,]$ln2012))
 high<-round(sum((marg[[1]]$`Upper CI (95%)`[2]/100)*data[data$PRDstr==1 & data$highTURNOUT==1,]$ln2012))
 mean<-round(sum((marg[[1]]$`Margin`[2]/100)*data[data$PRDstr==1 & data$highTURNOUT==1,]$ln2012))
 
 PRDat2.5<-c(mean-sum(data[data$PRDstr==1 & data$highTURNOUT==1,]$amlo2012), low-sum(data[data$PRDstr==1 & data$highTURNOUT==1,]$amlo2012), high-sum(data[data$PRDstr==1 & data$highTURNOUT==1,]$amlo2012))
+
+PRDat2.5
 ```
 Trying to turn the results into a table--in progress
-```{r}
-results <- as.data.frame(PRIat15, PRIat2.5, PRDat15, PRDat2.5)
 
-xtable(results)
-```
 
 ## Figure 3: Robustness check and placebo tests
 # I had to edit lines 850 and 855 to make it work
