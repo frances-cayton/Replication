@@ -813,6 +813,12 @@ PRDat2.5<-c(mean-sum(data[data$PRDstr==1 & data$highTURNOUT==1,]$amlo2012), low-
 PRDat2.5
 ```
 Trying to turn the results into a table--in progress
+```{r}
+results <- data.frame(PRIat15, PRIat2.5, PRDat15, PRDat2.5)
+
+results
+
+```
 
 
 ## Figure 3: Robustness check and placebo tests
