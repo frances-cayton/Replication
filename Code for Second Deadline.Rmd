@@ -5,7 +5,7 @@ output: html_document
 
 We have replicated Tables 1-3 and Figures 1-3 from our original paper "Groceries for Votes: The Electoral Returns of Vote Buying," $\textit{The Journal of Politics}$, 81(3), 790-804. This includes all of the main findings from the paper, though excludes one simulation done as a robustness check. At this time we have 4 possible routes for extension that we plan to do; these replications here provide the groundwork for each routes. Below we have listed each extension path and which tables/figures in our replication code these will build on. 
 
-These options include: (1) Re-running the regressions through simulation, and seeing if the results hold (Table 1-2, Figure 2-3). (2) The author uses robust standard errors, but does not discuss whether these match regular standard errors. We plan to check this. (Tables 1-2, Figures 2-3) (3) The author matches electoral precinct data with census precinct data. Per King, Imai, Rivera (2020), in many countries these two precinct specifications do not match, including in Mexico during the 2012 election (the election under analysis here). These authors develop a method for syncing the two different precinct data. We will test to see if the results hold using the accurate precinct (Tables 1-2, Figures 2-3) (4) The author uses the measure of `proximity` to a Soriana store as an instrument to capture how much one may value the giftcard given. Preliminary tests suggest that the relationship does not hold if one is to use `distance` instance of `proximity` (Figures 1-3, Tables 1-3) 
+These options include: (1) Re-running the regressions through simulation, and seeing if the results hold (Table 1-2, Figure 2-3). (2) The author uses robust standard errors, but does not discuss whether these match regular standard errors. We plan to check this. (Tables 1-2, Figures 2-3) (3) The author matches electoral precinct data with census precinct data. Per King, Imai, Rivera (2020), in many countries these two precinct specifications do not match, including in Mexico during the 2012 election (the election under analysis here). These authors develop a method for syncing the two different precinct data. We will test to see if the results hold using the accurate precinct (Tables 1-2, Figures 2-3) (4) The author uses the measure of `proximity` to a Soriana store as an instrument to capture how much one may value the giftcard given. Preliminary tests suggest that the relationship does not hold if one is to use `distance` instance of `proximity` (Figures 1-3, Tables 1-3). 
 
 ```{r, results = 'hide', message = FALSE}
 library(foreign)
@@ -803,6 +803,7 @@ Trying to turn the results into a table--in progress
 results <- as.data.frame(PRIat15, PRIat2.5, PRDat15, PRDat2.5)
 
 xtable(results)
+stargazer(results)
 ```
 
 ## Figure 3: Robustness check and placebo tests
