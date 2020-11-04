@@ -6,11 +6,11 @@ output:
 ---
 
 \begin{center}
-**Authors: Chengyu Fu, Molly Hickey, and Frances Cayton**
+Authors: Chengyu Fu, Molly Hickey, and Frances Cayton
 \end{center}
 
 
-We have replicated Tables 1-3 and Figures 1-3 from our original paper "Groceries for Votes: The Electoral Returns of Vote Buying," $\textit{The Journal of Politics}$, 81(3), 790-804. The original paper can be found (here)[http://dx.doi.org/10.1086/702945]. The code and data for this replication can be found and downloaded from our group's Github repo [here](https://github.com/frances-cayton/Replication).
+We have replicated Tables 1-3 and Figures 1-3 from our original paper "Groceries for Votes: The Electoral Returns of Vote Buying," $\textit{The Journal of Politics}$, 81(3), 790-804. The original paper can be found (here)[http://dx.doi.org/10.1086/702945]. The code and data for this replication can be found and downloaded from our group's Github repo (here)[https://github.com/frances-cayton/Replication].
 
 This report includes all of the main findings from the paper, though excludes one more tangential simulation completed in the paper. At this time we have 4 possible routes for extension that we plan to do; these replications here provide the groundwork for each routes. Below we have listed each extension path and which tables/figures in our replication code these will build on. 
 
