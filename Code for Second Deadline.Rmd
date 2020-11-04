@@ -736,6 +736,10 @@ ggplot()+
 ```
 
 ## Table 3: Effects of the Location of Soriana Stores on Voting Behavior (Molly)
+
+Table 3 is designed to illustrate that the vote-buying effort influenced only voters within a certain proximity. It compares the aggregated votes in PRD strongholds of Pena Nieto, the PRI beneficiary of the vote-buying effort, and Lopez Obrador, the PRD candidate who lost out due to vote buying. It imagines a counterfactual in which all PRD strongholds were either 15km or 2.5 km from the nearest Soriana store. In the paper, the table shows very little effect at 15km, but a much stronger effect at 2.5 km. When we replicated this table, we were unable to reach the same figures.
+
+
 Regressing proximity and stronghold on EPN voteshare 
 ```{r}
 g <- glm(EPNa ~ proximity*PRIstr*highTURNOUT+proximity*PRDstr*highTURNOUT+proximity*PANstr*highTURNOUT+     
@@ -763,13 +767,20 @@ mean<-round(sum((marg[[1]]$`Margin`[1]/100)*data[data$PRDstr==1 & data$highTURNO
 
 PRIat15<-c(sum(data[data$PRDstr==1 & data$highTURNOUT==1,]$epn2012)-mean, sum(data[data$PRDstr==1 & data$highTURNOUT==1,]$epn2012)-low, sum(data[data$PRDstr==1 & data$highTURNOUT==1,]$epn2012)-high)
 
+PRIat15
+```
+
+```{r}
 low<-round(sum((marg[[1]]$`Lower CI (95%)`[2]/100)*data[data$PRDstr==1 & data$highTURNOUT==1,]$ln2012))
 high<-round(sum((marg[[1]]$`Upper CI (95%)`[2]/100)*data[data$PRDstr==1 & data$highTURNOUT==1,]$ln2012))
 mean<-round(sum((marg[[1]]$`Margin`[2]/100)*data[data$PRDstr==1 & data$highTURNOUT==1,]$ln2012))
 
 PRIat2.5<-c(mean-sum(data[data$PRDstr==1 & data$highTURNOUT==1,]$epn2012), low-sum(data[data$PRDstr==1 & data$highTURNOUT==1,]$epn2012), high-sum(data[data$PRDstr==1 & data$highTURNOUT==1,]$epn2012))
 
+PRIat2.5
+```
 
+```{r}
 g <- glm(AMLOa ~ proximity*PRIstr*highTURNOUT+proximity*PRDstr*highTURNOUT+proximity*PANstr*highTURNOUT+     
            PRI09a+PRD09a+PAN09a+PART09+
            lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
@@ -781,8 +792,9 @@ g <- glm(AMLOa ~ proximity*PRIstr*highTURNOUT+proximity*PRDstr*highTURNOUT+proxi
 
 marg <-marg(mod = g, var_interest = c("proximity"), type = 'levels', data=data[data$PRDstr==1 & data$highTURNOUT==1,],
            at_var_interest = c(1/15, 1/2.5))
+```
 
-
+```{r}
 #At 15 km
 PRDat15<-c()
 PRDat2.5<-c()
@@ -792,22 +804,37 @@ mean<-round(sum((marg[[1]]$`Margin`[1]/100)*data[data$PRDstr==1 & data$highTURNO
 
 PRDat15<-c(mean-sum(data[data$PRDstr==1 & data$highTURNOUT==1,]$amlo2012), low-sum(data[data$PRDstr==1 & data$highTURNOUT==1,]$amlo2012), high-sum(data[data$PRDstr==1 & data$highTURNOUT==1,]$amlo2012))
 
+PRDat15
+```
+
+```{r}
 low<-round(sum((marg[[1]]$`Lower CI (95%)`[2]/100)*data[data$PRDstr==1 & data$highTURNOUT==1,]$ln2012))
 high<-round(sum((marg[[1]]$`Upper CI (95%)`[2]/100)*data[data$PRDstr==1 & data$highTURNOUT==1,]$ln2012))
 mean<-round(sum((marg[[1]]$`Margin`[2]/100)*data[data$PRDstr==1 & data$highTURNOUT==1,]$ln2012))
 
 PRDat2.5<-c(mean-sum(data[data$PRDstr==1 & data$highTURNOUT==1,]$amlo2012), low-sum(data[data$PRDstr==1 & data$highTURNOUT==1,]$amlo2012), high-sum(data[data$PRDstr==1 & data$highTURNOUT==1,]$amlo2012))
+
+PRDat2.5
 ```
 Trying to turn the results into a table--in progress
 ```{r}
-results <- as.data.frame(PRIat15, PRIat2.5, PRDat15, PRDat2.5)
+results <- data.frame(PRIat15, PRIat2.5, PRDat15, PRDat2.5)
 
+results
+
+<<<<<<< HEAD
 xtable(results)
 stargazer(results)
+=======
+>>>>>>> 89b00b4189ce4e98fef10ba0ee452ed6839f5bac
 ```
 
+
 ## Figure 3: Robustness check and placebo tests
-# I had to edit lines 850 and 855 to make it work
+
+Figure 3 offers on the left, a robustness check, and on the right a placebo test. The robustness check (3A) test the marginal effect of proximity to a Soriana store for proximity in PRD strongholds using three different alternative model specifications. Instead of coding the vote shares the number of registered voters supporting each candidate, the author coded them as the proportion of the total number of votes, the vote share change from 2009 to 2012, and driving proximity. In all of these cases, the marginal effects are similar to the magintudes shown in Table 2. The placebo test (3B) tests for unobserved characteristics in the precints, by applying the replicating the analysis in the following ways: with the dependent variable as the vote shares from the 2006 and 2009 federal elections, with precints outside the State of Mexico and Mexico City, and with proximity to Walmart-Mexico stores instead of Soriana. The effects of these tests are not significantly different from zero.
+
+
 ```{r}
 results <- read.table(header=T, con <- textConnection('
 Stronghold DV	Coefficient	StdError	Model	 Order
@@ -919,277 +946,4 @@ ggplot(results, aes(y=Model, x = Coefficient, shape=Stronghold, color=Stronghold
 
 ```
 
-# Figure 4: Randomization Inference Results
-```{r}
-rm(list=ls(all=TRUE))
-library(foreign)
-library(ggplot2)
-library(stargazer)
-library(arm)
-library(rms)
-library(msm)
-library(systemfit)
-library(xtable)
-library(maptools)
-library(ggplot2)
-library(rgeos)
-library(Imap)
-library(spatstat)
-library(multiwayvcov)
-library(numDeriv)
-library(interplot)
 
-data <- read.dta("datawork.dta")
-data <- subset(data, distance<=20)
-
-#Finding centroids for each Polygon
-centroids<-data[,c("centroidLONG","centroidLAT")]
-coordinates(centroids) <- ~ centroidLONG + centroidLAT
-centroids<-as.matrix(data.frame(centroids))
-
-
-#Loading Soriana Information
-#sorianas<-read.dta("/rawdata/Coordenadas4Tiendas.dta") #commented this out since it was having trouble finding the data
-sorianas<-read.dta("/Users/mollyhickey/QMReplication/rawdata/Coordenadas4Tiendas.dta")
-coordinates(sorianas) <- ~ longitude + latitude
-sorianas<-as.matrix(data.frame(sorianas))
-```
-
-```{r}
-placeboEPNslope<-c()
-placeboEPNse<-c()
-placeboAMLOslope<-c()
-placeboAMLOse<-c()
-
-
-
-#for(k in 1:1000) {
-  #rm(a, min, distancesstores, benchmarkPRI.1, benchmarkPRD.1)  
-  #a<-sorianas[sample(nrow(sorianas),71),]
-  #min<-c()
-for(i in 1:nrow(centroids)){
-  distancesstores<-  matrix(gdist(centroids[i,1],centroids[i,2], a[,2],a[,1], units = "km"))
-  min[i]<-min(distancesstores, na.rm=TRUE)
-}
-
-
-
-```
-data$placebodist<-min
-data$placeboprox<-1/data$placebodist
-
-data1<-data
-       
-  
-    #EPN
-benchmarkPRI.1 <- lm( EPNa ~ placeboprox*PRIstr*highTURNOUT+placeboprox*PRDstr*highTURNOUT+placeboprox*PANstr*highTURNOUT+     
-                        PRI09a+PRD09a+PAN09a+PART09+
-                        lnpop+P18+P65+density+area+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
-                        EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
-                        PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
-                        PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
-                        CAR+CELULAR+INTERNET+
-                        id_mun, data=data1, x=TRUE, y=TRUE)
-
-covBMpri <- cluster.vcov(benchmarkPRI.1, data1$id_dist)
-
-coeftest(benchmarkPRI.1, covBMpri)
-
-k1<-c()
-k2<-c()
-k3<-c()
-k4<-c()
-
-for(i in 1:length(benchmarkPRI.1$coef)){
-  if(names(benchmarkPRI.1$coef[i])=="placeboprox"){
-    k1<-i
-  }
-  if(names(benchmarkPRI.1$coef[i])=="placeboprox:highTURNOUT"){
-    k2<-i
-  }
-  if(names(benchmarkPRI.1$coef[i])=="placeboprox:PRDstr"){
-    k3<-i
-  }
-  if(names(benchmarkPRI.1$coef[i])=="placeboprox:highTURNOUT:PRDstr"){
-    k4<-i
-  }
-}
-
-
-
-g_prd <- function(b){
-  return( b[k1] + b[k2] + b[k3] + b[k4] )
-}
-
-grad_g_prd <-  jacobian(g_prd, benchmarkPRI.1$coef)
-
-
-
-placeboEPNslope[k] <- benchmarkPRI.1$coefficients[c("placeboprox")] + 
-  benchmarkPRI.1$coefficients[c("placeboprox:highTURNOUT")] + 
-  benchmarkPRI.1$coefficients[c("placeboprox:PRDstr")]+  
-  benchmarkPRI.1$coefficients[c("placeboprox:highTURNOUT:PRDstr")]
-
-placeboEPNse[k] <- sqrt(grad_g_prd%*% covBMpri %*% t(grad_g_prd))
-
-
-#AMLO
-    benchmarkPRD.1 <- lm( AMLOa ~ placeboprox*PRIstr*highTURNOUT+placeboprox*PRDstr*highTURNOUT+placeboprox*PANstr*highTURNOUT+     
-                             PRI09a+PRD09a+PAN09a+PART09+
-                             lnpop+P18+P65+density+area+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
-                             EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
-                             PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
-                             PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
-                             CAR+CELULAR+INTERNET+
-                             id_mun, data=data1, x=TRUE, y=TRUE)
-    
-    covBMprd <- cluster.vcov(benchmarkPRD.1, data1$id_dist)
-    
-    coeftest(benchmarkPRD.1, covBMprd)
-    
-    k1<-c()
-    k2<-c()
-    k3<-c()
-    k4<-c()
-    
-    for(i in 1:length(benchmarkPRD.1$coef)){
-      if(names(benchmarkPRD.1$coef[i])=="placeboprox"){
-        k1<-i
-      }
-      if(names(benchmarkPRD.1$coef[i])=="placeboprox:highTURNOUT"){
-        k2<-i
-      }
-      if(names(benchmarkPRD.1$coef[i])=="placeboprox:PRDstr"){
-        k3<-i
-      }
-      if(names(benchmarkPRD.1$coef[i])=="placeboprox:highTURNOUT:PRDstr"){
-        k4<-i
-      }
-    }
-    
-    
-    
-    g_prd <- function(b){
-      return( b[k1] + b[k2] + b[k3] + b[k4] )
-    }
-    
-    grad_g_prd <-  jacobian(g_prd, benchmarkPRD.1$coef)
-    
-    
-    placeboAMLOslope[k] <- benchmarkPRD.1$coefficients[c("placeboprox")] + benchmarkPRD.1$coefficients[c("placeboprox:highTURNOUT")] + benchmarkPRD.1$coefficients[c("placeboprox:PRDstr")]+  benchmarkPRD.1$coefficients[c("placeboprox:highTURNOUT:PRDstr")]
-    
-    placeboAMLOse[k] <- sqrt(grad_g_prd%*% covBMprd %*% t(grad_g_prd))
-    
-print(k)
-  
-  }
-  
-
-save(placeboEPNslope, file="EPNslopeRI.RData")
-save(placeboAMLOslope, file="AMLOslopeRI.RData")
-save(placeboEPNse, file="EPNseRI.RData")
-save(placeboAMLOse, file="AMLOseRI.RData")
-
-
-benchmarkPRI.1 <- lm( EPNa ~ proximity*PRIstr*highTURNOUT+proximity*PRDstr*highTURNOUT+proximity*PANstr*highTURNOUT+     
-                        PRI09a+PRD09a+PAN09a+PART09+
-                        lnpop+P18+P65+density+area+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
-                        EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
-                        PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
-                        PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
-                        CAR+CELULAR+INTERNET+
-                        id_mun, data=data, x=TRUE, y=TRUE)
-
-covBMpri <- cluster.vcov(benchmarkPRI.1, data$id_dist)
-
-coeftest(benchmarkPRI.1, covBMpri)
-
-g_prd <- function(b){
-  return( b[2] + b[140] + b[142] + b[147] )
-}
-
-grad_g_prd <-  jacobian(g_prd, benchmarkPRI.1$coef)
-
-slopesEPN <- benchmarkPRI.1$coefficients[c("proximity")] + benchmarkPRI.1$coefficients[c("proximity:highTURNOUT")] + benchmarkPRI.1$coefficients[c("proximity:PRDstr")]+  benchmarkPRI.1$coefficients[c("proximity:highTURNOUT:PRDstr")]
-
-seEPN<-sqrt(grad_g_prd%*% covBMpri %*% t(grad_g_prd))
-
-benchmarkPRD.1 <- lm( AMLOa ~ proximity*PRIstr*highTURNOUT+proximity*PRDstr*highTURNOUT+proximity*PANstr*highTURNOUT+     
-                        PRI09a+PRD09a+PAN09a+PART09+
-                        lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
-                        EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
-                        PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
-                        PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
-                        CAR+CELULAR+INTERNET+
-                        id_mun, data=data, x=TRUE, y=TRUE)
-
-covBMprd <- cluster.vcov(benchmarkPRD.1, data$id_dist)
-
-coeftest(benchmarkPRD.1, covBMprd)
-
-g_prd <- function(b){
-  return( b[2] + b[140] + b[142] + b[147] )
-}
-
-grad_g_prd <-  jacobian(g_prd, benchmarkPRD.1$coef)
-
-
-
-slopesAMLO <- benchmarkPRD.1$coefficients[c("proximity")] + benchmarkPRD.1$coefficients[c("proximity:highTURNOUT")] + benchmarkPRD.1$coefficients[c("proximity:PRDstr")]+  benchmarkPRD.1$coefficients[c("proximity:highTURNOUT:PRDstr")]
-
-seAMLO<-sqrt(grad_g_prd%*% covBMprd %*% t(grad_g_prd))
-
-placeboEPN<-placeboEPNslope
-placeboAMLO<-placeboAMLOslope
-
-EPN<-slopesEPN
-AMLO<-slopesAMLO
-
-placebo<-c(placeboEPNslope,placeboAMLOslope)
-placebo<-data.frame(placebo)
-placebo$reg<-NA
-placebo$reg[1:1000]<-"Peña Nieto's Vote Share"
-placebo$reg[1001:2000]<-"López Obrador's Vote Share"
-placebo$val<-NA
-placebo$val[1:1000]<-slopesEPN
-placebo$val[1001:2000]<-slopesAMLO
-
-p    <- 0.05
-
-
-#Randomization Inference Results
-placebo$pvalue<-NA
-placebo$pvalue[1:1000]<- mean(placebo$placebo[1:1000] > EPN)  
-placebo$pvalue[1001:2000]<-  mean(placebo$placebo[1001:2000] < AMLO)  
-
-
-placebo$val1[1:1000]<-slopesEPN
-placebo$val1[1001:2000]<-slopesAMLO
-
-placebo$placebo1[1:1000]<-placeboEPNslope
-placebo$placebo1[1001:2000]<-placeboAMLOslope
-
-
-placebo$pvalue1<-NA
-placebo$pvalue1[1:1000]<- mean(placebo$placebo1[1:1000] > slopesEPN)  
-placebo$pvalue1[1001:2000]<-  mean(placebo$placebo1[1001:2000] < slopesAMLO)  
-
-
-
-placebo$adjust<-NA
-placebo$adjust[1:1000]<- (7.5) 
-placebo$adjust[1001:2000]<-(-7.5)
-
-
-
-
-p <- ggplot(placebo, aes(x=placebo))+geom_histogram(binwidth=.5, colour="black", fill="white")+
-  theme_bw()+geom_vline(aes(xintercept=val), linetype=2, size=1, colour="red")+ylab("Density")+
-  xlab(expression(paste(partialdiff, "y", "/" , partialdiff, "Proximity")))+ facet_grid(reg ~ .)+
-  theme(axis.text=element_text(size=16),
-  axis.title=element_text(size=16),
-  strip.text = element_text(size = 16))
-
-p
-
-```
