@@ -426,9 +426,6 @@ results$Model[results$Model==4]<-"4. Political Awareness"
 
 results$Variable <- factor(results$Variable, levels=results$Variable[order(results$Order)])
 
-results$min_repli<-results$Coef_repli-(1.96*results$SE_repli)
-results$max_repli<-results$Coef_repli+(1.96*results$SE_repli)
-
 # c is the figure 1 with replicated data (distance rather than proximity)
 c<-ggplot(results, aes(y=reorder(Variable, Order), x = Coefficient)) +
 #  scale_colour_gradient(low="white", high="black")+
