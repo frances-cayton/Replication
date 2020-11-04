@@ -3,9 +3,11 @@ title: "Replication Code for Second Deadline"
 output: html_document
 ---
 
-We have replicated Tables 1-3 and Figures 1-3 from our original paper "Groceries for Votes: The Electoral Returns of Vote Buying," $\textit{The Journal of Politics}$, 81(3), 790-804. This includes all of the main findings from the paper, though excludes one simulation done as a robustness check. At this time we have 4 possible routes for extension that we plan to do; these replications here provide the groundwork for each routes. Below we have listed each extension path and which tables/figures in our replication code these will build on. 
+We have replicated Tables 1-3 and Figures 1-3 from our original paper "Groceries for Votes: The Electoral Returns of Vote Buying," $\textit{The Journal of Politics}$, 81(3), 790-804. The original paper can be found (here)[http://dx.doi.org/10.1086/702945]. The code and data for this replication can be found and downloaded from our group's Github repo [here](https://github.com/frances-cayton/Replication).
 
-These options include: (1) Re-running the regressions through simulation, and seeing if the results hold (Table 1-2, Figure 2-3). (2) The author uses robust standard errors, but does not discuss whether these match regular standard errors. We plan to check this. (Tables 1-2, Figures 2-3) (3) The author matches electoral precinct data with census precinct data. Per King, Imai, Rivera (2020), in many countries these two precinct specifications do not match, including in Mexico during the 2012 election (the election under analysis here). These authors develop a method for syncing the two different precinct data. We will test to see if the results hold using the accurate precinct (Tables 1-2, Figures 2-3) (4) The author uses the measure of `proximity` to a Soriana store as an instrument to capture how much one may value the giftcard given. Preliminary tests suggest that the relationship does not hold if one is to use `distance` instance of `proximity` (Figures 1-3, Tables 1-3). 
+This report includes all of the main findings from the paper, though excludes one more tangential simulation completed in the paper. At this time we have 4 possible routes for extension that we plan to do; these replications here provide the groundwork for each routes. Below we have listed each extension path and which tables/figures in our replication code these will build on. 
+
+These options include: (1) Re-running the regressions through simulation, and seeing if the results hold (Table 1-2, Figure 2-3). (2) The author uses robust standard errors, but does not discuss whether these match regular standard errors. We plan to check this. (Tables 1-2, Figures 2-3) (3) The author matches electoral precinct data with census precinct data. Per [King, Imai, Rivera (2020)](https://gking.harvard.edu/files/gking/files/170507.email_.pdf), in these precincts are different geographic entities reported by different government offices. To get around this problem, these authors develop a ["precinct cluster,"](https://gking.harvard.edu/files/gking/files/progpol-supp.pdf). We will test to see if the results hold using the accurate precinct (Tables 1-2, Figures 2-3) (4) The author uses the measure of `proximity` to a Soriana store as an instrument to capture how much one may value the giftcard given. Preliminary tests suggest that the relationship does not hold if one is to use `distance` instance of `proximity` (Figures 1-3, Tables 1-3). We have begun this portion of the analysis (see under the section for Figure 1).
 
 ```{r, results = 'hide', message = FALSE}
 library(foreign)
@@ -116,7 +118,6 @@ base_3$munID <- as.numeric(paste(base_3$estado, base_3$municipio, sep = ""))
 ```
 
 ```{r model_figure_1}
-
 # I use multinom from nnet here
 # Is constant term needed?
 m1_3_multinom <- multinom(partyid ~ prox+edad+gender+education+sec+cellphone+internet+localidae, data = base_3)
@@ -184,7 +185,7 @@ summary(sur_part3)
 
 ```
 
-I rewrite the Stata code to R here, and compare the results in R, Stata, and in the paper. 
+I rewrote the Stata code to R here, and compared the results in R, Stata, and in the paper. 
 
 First, for the binomial and multinomial models (i.e., models starting with "m"), the R and Stata replication results are generally the same.
 
@@ -257,7 +258,7 @@ b<-ggplot(results, aes(y=reorder(Variable, Order), x = Coef_repli)) +
   labs( x = "Coefficients", y = "Variable") +
   theme_bw()+
   theme(
-    axis.title.x = element_text(face="bold", size=18),
+    axis.title.x = element_text(face="bold", size=1),
     axis.title.y = element_text(face="bold", size=18, angle=90),
     axis.text.x  = element_text( size=16),
     strip.text.x = element_text(size=16),
@@ -338,6 +339,8 @@ summary(rep_sur_part3)
 
 ```
 
+
+
 # Replication of Table 1 (Frances)
 
 ```{r}
@@ -386,7 +389,7 @@ robustness4 <- ols( proximity ~
 ```
 
 
-This creates a table of covariates
+This creates a table of covariates by precincts within Mexico City:
 
 ```{r}
 stargazer(robustness1, robustness2, robustness3, robustness4, star.cutoffs = c(0.05, 0.01, 0.001), style = "qje", digits=3, type = "text", 
@@ -429,7 +432,8 @@ benchmarkPRI.1 <- lm( EPNa ~ proximity*PRIstr*highTURNOUT+proximity*PRDstr*highT
                          id_mun, data=data, x=TRUE, y=TRUE)
 ```
 
-This function "returns a multi-way cluster-robust variance-covariance matrix" -- I think this bit right here is related to what Gary was saying on robust standard errors and that they can cover up problems with the model. I don't fully understand this right now, but perhaps after we get a little further in the semester. 
+
+This function returns a multi-way cluster-robust variance-covariance matrix: 
 ```{r}
 covBMpri <- cluster.vcov(benchmarkPRI.1, data$id_dist)
 
@@ -589,7 +593,9 @@ seBM[2,4]<-sqrt(grad_g_prd%*% covBMpart %*% t(grad_g_prd))
 seBM[3,4]<-sqrt(grad_g_pan%*% covBMpart %*% t(grad_g_pan))
 ```
 
-Table 1: 
+### Table 1
+OLS Results with robust standard errors, as presented in the model. Below you will see both the table presented in the article using RSE and a version updated with classical standard errors. We see that the RSEs are, at times, at least 2x higher than classical SEs. As such, we will continue to examine potential model mis-specification here. 
+
 ```{r}
 stargazer(coeftest(benchmarkPRI.1, covBMpri), coeftest(benchmarkPRD.1, covBMprd), coeftest(benchmarkPAN.1, covBMpan), coeftest(benchmarkPART.1, covBMpart),style = "qje", type = "text", star.cutoffs = c(0.05, 0.01, 0.001), digits=3,
           covariate.labels = c("Proximity", "PRI stronghold", "High Mobilization", "PRD stronghold","PAN stronghold", "PRI 2009", "PRD2009", "PAN2009", "Turnout 2009", "Population Log", "Population over 18 ",
@@ -609,10 +615,24 @@ stargazer(coeftest(benchmarkPRI.1, covBMpri), coeftest(benchmarkPRD.1, covBMprd)
 ```
 
 
+**Classical Standard Errors**
+Here I present the results with classical standard errors. Here we see that in many instances robust standard errors are two-times (or larger) the size of classical standard errors. Some examples for this are on the coefficients for `PRI stronghold`, `PAN stronghold`, and the `PAN stronhold x Proximity x High Mobilization` interaction term. Here, perhaps, we find evidence of model mis-specification. Our group plans to investigate this further. 
 
-
-
-
+```{r}
+stargazer(coeftest(benchmarkPRI.1), coeftest(benchmarkPRD.1), coeftest(benchmarkPAN.1), coeftest(benchmarkPART.1),style = "qje", type = "text", star.cutoffs = c(0.05, 0.01, 0.001), digits=3,
+          covariate.labels = c("Proximity", "PRI stronghold", "High Mobilization", "PRD stronghold","PAN stronghold", "PRI 2009", "PRD2009", "PAN2009", "Turnout 2009", "Population Log", "Population over 18 ",
+                               "Population over 65", "Area", "Density", "Indigenous","Catholic","Nonreligious","Education","College degree","Illiteracy","Inhabitants per house","Population in the labor market",
+                               "Female population in the labor market", "No insurance","Female head of household","Inhabitants per room", "Dirt floor", "All services", "No services", "Car", "Mobile phone", "Internet", "ACULCO" , "ALMOLOYA DE JUAREZ " , 
+                               "ALMOLOYA DEL RIO" , "AMANALCO" , "AMECAMECA" , "APAXCO" , "ATENCO" , "ATIZAPAN" , "ATIZAPAN DE ZARAGOZA" , "AXAPUSCO" , "AYAPANGO" , "CALIMAYA" , "CAPULHUAC" , "CHALCO" , "CHAPULTEPEC" ,
+                               "CHIAUTLA" , "CHICOLOAPAN" , "CHICONCUAC" , "CHIMALHUACAN" , "COACALCO DE BERRIOZABAL" , "COCOTITLAN" , "COYOTEPEC" , "CUAUTITLAN" , "CUAUTITLAN IZCALLI" , "ECATEPEC DE MORELOS" , "HUEHUETOCA",
+                               "HUEYPOXTLA" , "HUIXQUILUCAN" , "ISIDRO FABELA" , "IXTAPALUCA" , "IXTLAHUACA" , "JALTENCO" , "JILOTEPEC" , "JILOTZINGO" , "JIQUIPILCO" , "JOCOTITLAN" , "JOQUICINGO" , "JUCHITEPEC" , "LA PAZ" ,
+                               "LERMA" , "MELCHOR OCAMPO" , "METEPEC" , "MEXICALTZINGO" , "MORELOS" , "NAUCALPAN DE JUAREZ" , "NEXTLALPAN" , "NEZAHUALCOYOTL" , "NICOLAS ROMERO" , "OCOYOACAC" , "OCUILAN" , "OTUMBA" , 
+                               "OTZOLOTEPEC" , "PAPALOTLA" , "POLOTITLAN" , "RAYON" , "SAN ANTONIO LA ISLA" , "SAN FELIPE DEL PROGRESO" , "SAN MARTIN DE LAS PIRAMIDES" , "SAN MATEO ATENCO" , "SOYANIQUILPAN DE JUAREZ" , "TECAMAC" ,
+                               "TEMAMATLA" , "TEMASCALAPA" , "TEMOAYA" , "TENANGO DEL AIRE" , "TENANGO DEL VALLE" , "TEOLOYUCAN" , "TEOTIHUACAN" , "TEPETLAOXTOC" , "TEPOTZOTLAN" , "TEQUIXQUIAC" , "TEXCALYACAC" , "TEXCOCO" , "TEZOYUCA" ,
+                               "TIANGUISTENCO" , "TLALMANALCO" , "TLALNEPANTLA DE BAZ" , "TOLUCA" , "TONANITLA" , "TULTEPEC" , "TULTITLAN" , "VALLE DE CHALCO SOLIDARIDAD" , "VILLA DE ALLEND" , "VILLA DEL CARBON" , "VILLA VICTORIA" , 
+                               "XALATLACO" , "XONACATLAN" , "ZINACANTEPEC" , "ZUMPANGO" , "ALVARO OBREGON" , "AZCAPOTZALCO" , "BENITO JUAREZ" , "COYOACAN" , "CUAJIMALPA DE MORELOS" , "CUAUHTEMOC" , "GUSTAVO A. MADERO" , "IZTACALCO" , 
+                               "IZTAPALAPA" , "MAGDALENA CONTRERAS" , "MIGUEL HIDALGO" , "MILPA ALTA" , "TLAHUAC" , "TLALPAN" , "VENUSTIANO CARRANZA" , "XOCHIMILCO"))
+```
 
 
 
