@@ -6,11 +6,11 @@ output:
 ---
 
 \begin{center}
-Authors: Chengyu Fu, Molly Hickey, and Frances Cayton
+**Authors: Chengyu Fu, Molly Hickey, and Frances Cayton**
 \end{center}
 
 
-We have replicated Tables 1-3 and Figures 1-3 from our original paper "Groceries for Votes: The Electoral Returns of Vote Buying," $\textit{The Journal of Politics}$, 81(3), 790-804. The original paper can be found (here)[http://dx.doi.org/10.1086/702945]. The code and data for this replication can be found and downloaded from our group's Github repo (here)[https://github.com/frances-cayton/Replication].
+We have replicated Tables 1-3 and Figures 1-3 from our original paper "Groceries for Votes: The Electoral Returns of Vote Buying," $\textit{The Journal of Politics}$, 81(3), 790-804. The original paper can be found (here)[http://dx.doi.org/10.1086/702945]. The code and data for this replication can be found and downloaded from our group's Github repo [here](https://github.com/frances-cayton/Replication).
 
 This report includes all of the main findings from the paper, though excludes one more tangential simulation completed in the paper. At this time we have 4 possible routes for extension that we plan to do; these replications here provide the groundwork for each routes. Below we have listed each extension path and which tables/figures in our replication code these will build on. 
 
@@ -314,7 +314,7 @@ b
 <<<<<<< HEAD
 =======
 
-Below is another replication (replacing proximity with distance) of Figure 1, testing the assumption that distance to the supermarket does not correlate with political attitudes and political behaviors.
+Below is a replication part (replacing proximity with distance) of Figure 1, testing the assumption that distance to the supermarket does not correlate with political attitudes and political behaviors.
 
 ```{r repli_model_figure_1}
 
@@ -396,60 +396,9 @@ rep_sur_part3 <- systemfit(list(interestpoli = rep_formula_interestpoli,
 
 summary(rep_sur_part3)
 
-results <- read.table(header=T, con <- textConnection('
-IV	Coefficient	StdError	Model	Included	Variable Order
-Distance	0.0153	0.0112	1	1	PRI 13
-Distance  -0.0266	0.0281 1	1	PAN 12
-Distance  0.0042  0.0180	1	1	PRD 11
-Distance  0.0040	0.0023	2	1	"President\'s Approval" 10
-Distance  0.0043	0.0023	2	1	"Governor\'s Approval" 9
-Distance  -0.0005  0.0023	2	1	"Congress\'s Approval" 8
-Distance  -0.0001  0.0006	3	1	"Party Member" 7
-Distance  -0.0004	0.0006 3	1	"Union Member" 6
-Distance  0.0007  0.0010 3	1	"Religious group member" 5
-Distance  -0.0260  0.0114 4	1	"Interest in politics" 4
-Distance  0.0179	0.0107	4	1	"Interest in elections" 3
-Distance  -0.0364 0.0108	4	1	"Talks about politcs" 2
-Distance  -0.0106  0.0113 4	1	"Follows news" 1
-'))
-close(con)
-
-results$min<-results$Coefficient-(1.96*results$StdError)
-results$max<-results$Coefficient+(1.96*results$StdError)
-results$Color[results$Included==1]<-"black"
-results$Color[results$Included==0]<-"white"
-
-results$Model[results$Model==1]<-"1. Party ID"
-results$Model[results$Model==2]<-"2. Approval"
-results$Model[results$Model==3]<-"3. Membership"
-results$Model[results$Model==4]<-"4. Political Awareness"
-
-results$Variable <- factor(results$Variable, levels=results$Variable[order(results$Order)])
-
-results$min_repli<-results$Coef_repli-(1.96*results$SE_repli)
-results$max_repli<-results$Coef_repli+(1.96*results$SE_repli)
-
-# c is the figure 1 with replicated data (distance rather than proximity)
-c<-ggplot(results, aes(y=reorder(Variable, Order), x = Coefficient)) +
-#  scale_colour_gradient(low="white", high="black")+
-  geom_point(size=3) +
-  facet_grid( ~ Model)+
-  geom_errorbarh(aes(xmin=min, xmax=max),  height = 0) +
-  geom_vline(xintercept = 0, linetype=2, color="red") +
-  labs( x = "Coefficients", y = "Variable") +
-  theme_bw()+
-  theme(
-    axis.title.x = element_text(face="bold", size=18),
-    axis.title.y = element_text(face="bold", size=18, angle=90),
-    axis.text.x  = element_text( size=16),
-    strip.text.x = element_text(size=16),
-    axis.text.y  = element_text( size=18))
-
-c
-
 ```
 
-Thus, we can see that the distance to Soriana may be endogenous to other political attitudes and behavior. Results show that a higher distance to the supermarket may correlate with lower interest in politics and lower frequency of talking politics. In other words, distance to Soriana may capture not the expected value of coupons but the varying political values and behaviors. This poses a challenge to the assumption that distance (or proximity) only impacts the expected value of gift cards.
+
 
 # Replication of Table 1 (Frances)
 
