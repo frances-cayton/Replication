@@ -337,6 +337,57 @@ rep_sur_part3 <- systemfit(list(interestpoli = rep_formula_interestpoli, interes
 
 summary(rep_sur_part3)
 
+results <- read.table(header=T, con <- textConnection('
+IV	Coefficient	StdError Coef_repli SE_repli	Model	Included	Variable Order
+Proximity	-0.052	0.100	-0.055 0.101 1	1	PRI 13
+Proximity  0.013	0.127	0.019 0.127 1	1	PAN 12
+Proximity  -0.102  0.140	-0.102 0.141 1	1	PRD 11
+Proximity  0.074	0.071	0.018 0.017 2	1	"President\'s Approval" 10
+Proximity  -0.090	0.074	-0.023 0.017 2	1	"Governor\'s Approval" 9
+Proximity  -0.039  0.073	0.008 0.016 2	1	"Congress\'s Approval" 8
+Proximity  -0.546  0.398	-0.004 0.005 3	1	"Party Member" 7
+Proximity  -0.047	0.147	-0.001 0.005 3	1	"Union Member" 6
+Proximity  0.055  0.145	0.002 0.008 3	1	"Religious group member" 5
+Proximity  -0.017  0.086  -0.015 0.086 4	1	"Interest in politics" 4
+Proximity  -0.087	0.078	-0.081 0.079 4	1	"Interest in elections" 3
+Proximity  0.105 0.080	0.109 0.081 4	1	"Talks about politcs" 2
+Proximity  0.014  0.085  0.015 0.085 4	1	"Follows news" 1
+'))
+close(con)
+
+results$min<-results$Coefficient-(1.96*results$StdError)
+results$max<-results$Coefficient+(1.96*results$StdError)
+results$Color[results$Included==1]<-"black"
+results$Color[results$Included==0]<-"white"
+
+results$Model[results$Model==1]<-"1. Party ID"
+results$Model[results$Model==2]<-"2. Approval"
+results$Model[results$Model==3]<-"3. Membership"
+results$Model[results$Model==4]<-"4. Political Awareness"
+
+results$Variable <- factor(results$Variable, levels=results$Variable[order(results$Order)])
+
+results$min_repli<-results$Coef_repli-(1.96*results$SE_repli)
+results$max_repli<-results$Coef_repli+(1.96*results$SE_repli)
+
+# c is the figure 1 with replicated data (distance rather than proximity)
+a<-ggplot(results, aes(y=reorder(Variable, Order), x = Coefficient)) +
+#  scale_colour_gradient(low="white", high="black")+
+  geom_point(size=3) +
+  facet_grid( ~ Model)+
+  geom_errorbarh(aes(xmin=min, xmax=max),  height = 0) +
+  geom_vline(xintercept = 0, linetype=2, color="red") +
+  labs( x = "Coefficients", y = "Variable") +
+  theme_bw()+
+  theme(
+    axis.title.x = element_text(face="bold", size=18),
+    axis.title.y = element_text(face="bold", size=18, angle=90),
+    axis.text.x  = element_text( size=16),
+    strip.text.x = element_text(size=16),
+    axis.text.y  = element_text( size=18))
+
+a
+
 ```
 
 
