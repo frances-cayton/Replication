@@ -10,19 +10,19 @@ Authors: Chengyu Fu, Molly Hickey, and Frances Cayton
 \end{center}
 
 
-We have replicated Tables 1-3 and Figures 1-3 from our original paper "Groceries for Votes: The Electoral Returns of Vote Buying," $\textit{The Journal of Politics}$, 81(3), 790-804. The original paper can be found (here)[http://dx.doi.org/10.1086/702945]. The code and data for this replication can be found and downloaded from our group's Github repo (here)[https://github.com/frances-cayton/Replication].
+We have replicated Tables 1-3 and Figures 1-3 from our original paper "Groceries for Votes: The Electoral Returns of Vote Buying," $\textit{The Journal of Politics}$, 81(3), 790-804. The original paper can be found [here](http://dx.doi.org/10.1086/702945). The code and data for this replication can be found and downloaded from our group's Github repo [here](https://github.com/frances-cayton/Replication). If you run into any trouble accessing the repo, do not hesitate to let us know.
 
-This report includes all of the main findings from the paper, though excludes one more tangential simulation completed in the paper. At this time we have 4 possible routes for extension that we plan to do; these replications here provide the groundwork for each routes. Below we have listed each extension path and which tables/figures in our replication code these will build on. 
+This report includes all of the main findings from the paper, though excludes one more tangential simulation completed in the paper. At this time we have 4 possible routes for extension that we plan to do; these replications here provide the groundwork for each route. Below we have listed each extension path and which tables/figures in our replication code these will build on. 
 
 These options include: 
 
 1. Re-running the regressions through simulation, and seeing if the results hold (Table 1-2, Figure 2-3). 
 
-2.  The author uses robust standard errors, but does not discuss whether these match regular standard errors. We have checked this, and note that the robust standard errors in many instances are far larger (at least 2x the size) of classical SEs. See the beginnings of this portion of our analysis at the end of the section for Table 1. (Tables 1-2, Figures 2-3) 
+2.  The author uses robust standard errors, but does not discuss whether these match regular standard errors. We have checked this, and note that the robust standard errors in many instances are far larger (at least 2x the size) than the classical SEs. See the beginnings of this portion of our analysis at the end of the section for Table 1 (Tables 1-2, Figures 2-3). 
 
-3.  The author matches electoral precinct data with census precinct data. Per [King, Imai, Rivera (2020)](https://gking.harvard.edu/files/gking/files/170507.email_.pdf), in these precincts are different geographic entities reported by different government offices. To get around this problem, these authors develop a ["precinct cluster,"](https://gking.harvard.edu/files/gking/files/progpol-supp.pdf). We will test to see if the results hold using the accurate precinct (Tables 1-2, Figures 2-3).
+3. The author matches electoral precinct data with census precinct data. Per [King, Imai, Rivera (2020)](https://gking.harvard.edu/files/gking/files/170507.email_.pdf), in these precincts are different geographic entities reported by different government offices. To get around this problem, these authors develop a ["precinct cluster,"](https://gking.harvard.edu/files/gking/files/progpol-supp.pdf). We will test to see if the results hold using the accurate precinct (Tables 1-2, Figures 2-3).
 
-4.  The author uses the measure of `proximity` to a Soriana store as an instrument to capture how much one may value the giftcard given. Preliminary tests suggest that the relationship does not hold if one is to use `distance` instance of `proximity` (Figures 1-3, Tables 1-3). We have begun this portion of the analysis (see under the section for Figure 1).
+4.  The author uses the measure of `proximity` to a Soriana store as an instrument to capture how much one may value the giftcard given. Preliminary tests suggest that the relationship does not hold if one is to use `distance` instance of `proximity` (Figures 1-3, Tables 1-3). We have begun this portion of the analysis (see under the section for Figure 1). `Proximity` here is measured as $\frac{1}{\text{distance}}$.
 
 
 
@@ -452,7 +452,6 @@ Thus, we can see that the distance to Soriana may be endogenous to other politic
 
 ```{r}
 data <- table
-head(table)
 
 #this is a function to round to the hundreds place of a decimal
 specify_decimal <- function(x, k) {format(round(x, k), nsmall = k)}
@@ -907,7 +906,7 @@ Figure 2 visualizes the predicted relationship between the distance to a Soriana
 
 This figure largely matches that found on page 799 of the article, though I note that in the article the Peña Nieto curve rises above 40% and López Obrador drops below 20%. This again is likely due to the difference in data between this model and that of the paper.
 
-## Table 3: Effects of the Location of Soriana Stores on Voting Behavior (Molly)
+# Table 3: Effects of the Location of Soriana Stores on Voting Behavior (Molly)
 
 Table 3 is designed to illustrate that the vote-buying effort influenced only voters within a certain proximity. It compares the aggregated votes in PRD strongholds of Pena Nieto, the PRI beneficiary of the vote-buying effort, and Lopez Obrador, the PRD candidate who lost out due to vote buying. It imagines a counterfactual in which all PRD strongholds were either 15km or 2.5 km from the nearest Soriana store. In the paper, the table shows very little effect at 15km, but a much stronger effect at 2.5 km. When we replicated this table, we were unable to reach the same figures.
 
