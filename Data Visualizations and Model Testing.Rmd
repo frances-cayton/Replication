@@ -1,0 +1,14 @@
+---
+title: "Distance Visualizations and Model Testing"
+output: html_document
+---
+
+```{r}
+plot(EPNa ~ distance, data = table)
+```
+
+
+```{r}
+plot(EPNa ~ proximity, xlim = c(0, 40), data = table)
+```
+
