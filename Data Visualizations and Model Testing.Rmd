@@ -3,12 +3,319 @@ title: "Distance Visualizations and Model Testing"
 output: html_document
 ---
 
+So, I re-estimated the model using a coarsened categorical variable for the distance. It seems to change the estimates, but I am having trouble generating some play data to make some plots and see (visually) how it changes things due to how complicated this dataset is/all of the factor variables. If any of you feel especially comfortable making up some data, feel free to go for it! 
+
+```{r, results = 'hide', message = FALSE}
+library(foreign)
+library(stargazer)
+library(arm)
+library(rms)
+library(msm)
+library(systemfit)
+library(xtable)
+library(gtools)
+library(multiwayvcov)
+library(numDeriv)
+library(interplot)
+library(modmarg)
+library(tidyverse)
+library(stats)
+library(haven)
+library(systemfit)
+library(nnet)
+library(sjmisc)
+library(maptools)
+library(rgeos)
+library(Imap)
+library(spatstat)
+```
+
 ```{r}
-plot(EPNa ~ distance, data = table)
+load("datawork.RData")
+table <- data
+```
+
+```{r}
+seq <- quantile(table$distance)
+seq <- seq[-5]
+seq <- as.numeric(seq)
+seq <- c(0, seq, 99.5835360)
+table$Distance.Cat <- cut(table$distance, breaks = seq)
+```
+
+```{r}
+table$Distance.Cat <- as.factor(table$Distance.Cat)
+```
+
+
+Re-estimating the model using the coarsened distance and classical standard errors
+
+```{r}
+#reclassifying municipality and district as factor variables
+data$id_mun<-factor(data$id_mun)
+data$id_dist<-factor(data$id_dist)
 ```
 
 
 ```{r}
-plot(EPNa ~ proximity, xlim = c(0, 40), data = table)
+benchmarkPRI.1 <- lm( EPNa ~ Distance.Cat*PRIstr*highTURNOUT+
+                        Distance.Cat*PRDstr*highTURNOUT+Distance.Cat*PANstr*highTURNOUT+ 
+                         PRI09a+PRD09a+PAN09a+PART09+
+                         lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+                         EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+                         PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+                         PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+                         CAR+CELULAR+INTERNET+
+                         id_mun, data=table, x=TRUE, y=TRUE)
+
+
+#The same model but testing for other parties: 
+
+benchmarkPRD.1 <- lm( AMLOa ~ Distance.Cat*PRIstr*highTURNOUT+
+                        Distance.Cat*PRDstr*highTURNOUT+Distance.Cat*PANstr*highTURNOUT+     
+                         PRI09a+PRD09a+PAN09a+PART09+
+                         lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+                         EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+                         PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+                         PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+                         CAR+CELULAR+INTERNET+
+                         id_mun, data=table, x=TRUE, y=TRUE)
+
+
+benchmarkPAN.1 <- lm( JVMa ~ Distance.Cat*PRIstr*highTURNOUT+Distance.Cat*PRDstr*highTURNOUT+Distance.Cat*PANstr*highTURNOUT+     
+                         PRI09a+PRD09a+PAN09a+PART09+
+                         lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+                         EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+                         PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+                         PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+                         CAR+CELULAR+INTERNET+
+                         id_mun, data=table, x=TRUE, y=TRUE)
+
+
+
+benchmarkPART.1 <- lm( PART ~ Distance.Cat*PRIstr*highTURNOUT+Distance.Cat*PRDstr*highTURNOUT+Distance.Cat*PANstr*highTURNOUT+     
+                          PRI09a+PRD09a+PAN09a+PART09+
+                          lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+                          EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+                          PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+                          PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+                          CAR+CELULAR+INTERNET+
+                          id_mun, data=table, x=TRUE, y=TRUE)
+
+```
+
+```{r}
+benchmarkPRI.1.proximity <- lm( EPNa ~ proximity*PRIstr*highTURNOUT+
+                        proximity*PRDstr*highTURNOUT+proximity*PANstr*highTURNOUT+ 
+                         PRI09a+PRD09a+PAN09a+PART09+
+                         lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+                         EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+                         PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+                         PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+                         CAR+CELULAR+INTERNET+
+                         id_mun, data=table, x=TRUE, y=TRUE)
+```
+
+### Table 1
+
+
+```{r}
+summary(benchmarkPRI.1)
+summary(benchmarkPRI.1.proximity)
+```
+
+```{r}
+####Predicted vote shares in PRD Mobilized Strongholds
+
+g <- glm(EPNa ~ proximity*PRIstr*highTURNOUT+proximity*PRDstr*highTURNOUT+proximity*PANstr*highTURNOUT+     
+           PRI09a+PRD09a+PAN09a+PART09+
+           lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+           EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+           PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+           PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+           CAR+CELULAR+INTERNET+
+           id_mun, data=data, family = 'gaussian')
+
+at.prox <- seq(1/20, 1/2.5, 1/1000)
+marg<-marg(mod = g, var_interest = c("proximity"), type = 'levels', data=data[data$PRDstr==1 & data$highTURNOUT==1,],
+           at_var_interest = seq(1/20, 1/2.5, 1/1000),  cofint=.95)
+
+#getting confidence intervals for the expected PN turnout in PRD strongholds
+mean <- marg[[1]]$Margin
+upper <- marg[[1]]$'Lower CI (95%)'
+lower <- marg[[1]]$'Upper CI (95%)'
+
+dataPRI<-data.frame(cbind(at.prox, mean, upper, lower))
+dataPRI$distance<-(1/dataPRI$at.prox)
+
+
+#same for AMLO
+g <- glm(AMLOa ~ proximity*PRIstr*highTURNOUT+proximity*PRDstr*highTURNOUT+proximity*PANstr*highTURNOUT+     
+           PRI09a+PRD09a+PAN09a+PART09+
+           lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+           EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+           PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+           PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+           CAR+CELULAR+INTERNET+
+           id_mun, data=data, family = 'gaussian')
+
+marg<-marg(mod = g, var_interest = c("proximity"), type = 'levels', data=data[data$PRDstr==1 & data$highTURNOUT==1,],
+           at_var_interest = seq(1/20, 1/2.5, 1/1000), cofint=.95)
+
+mean <- marg[[1]]$Margin
+upper <- marg[[1]]$'Lower CI (95%)'
+lower <- marg[[1]]$'Upper CI (95%)'
+
+dataPRD<-data.frame(cbind(at.prox, mean, upper, lower))
+dataPRD$distance<-(1/dataPRD$at.prox)
+
+
+g <- glm(JVMa ~ proximity*PRIstr*highTURNOUT+proximity*PRDstr*highTURNOUT+proximity*PANstr*highTURNOUT+     
+           PRI09a+PRD09a+PAN09a+PART09+
+           lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+           EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+           PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+           PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+           CAR+CELULAR+INTERNET+
+           id_mun, data=data, family = 'gaussian')
+
+marg<-marg(mod = g, var_interest = c("proximity"), 
+           type = 'levels', data=data[data$PRDstr==1 & data$highTURNOUT==1,],
+           at_var_interest = seq(1/20, 1/2.5, 1/1000),cofint=.95)
+
+mean <- marg[[1]]$Margin
+upper <- marg[[1]]$'Lower CI (95%)'
+lower <- marg[[1]]$'Upper CI (95%)'
+
+dataPAN<-data.frame(cbind(at.prox, mean, upper, lower))
+dataPAN$distance<-(1/dataPAN$at.prox)
+
+datasim<-data.frame(rbind(dataPRI, dataPRD, dataPAN))
+
+datasim$dv<-NA
+datasim$dv[1:351]<-"Peña Nieto"
+datasim$dv[352:702]<-"López Obrador"
+datasim$dv[703:1053]<-"Vázquez Mota"
+
+ggplot()+
+  geom_line(data=datasim, aes(x=distance, y=mean,  linetype=dv))+
+  geom_ribbon(data=datasim, aes(x=distance,  ymin=lower, 
+                      ymax=upper, fill=dv),  alpha=0.5)+theme_bw()+
+  ylab("Predicted vote shares (%)")+
+  xlab("Distance to Soriana (km)")+xlim(2.5,20)+ylim(0,50)+ 
+  scale_fill_manual(values = c("#F0E442","red", "deepskyblue2"), name="")+
+  scale_linetype_manual(values=c("solid", "longdash","dotted"), name="" )+
+  theme(axis.text=element_text(size=18),
+        axis.title=element_text(size=18),
+        legend.text = element_text(size = 18))
+```
+
+```{r}
+data <- table
+```
+
+
+Trying to re-create this with the coarsened... where I am running into problems...
+```{r}
+####Predicted vote shares in PRD Mobilized Strongholds
+
+g <- glm(EPNa ~ Distance.Cat*PRIstr*highTURNOUT+Distance.Cat*PRDstr*highTURNOUT+Distance.Cat*PANstr*highTURNOUT+     
+           PRI09a+PRD09a+PAN09a+PART09+
+           lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+           EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+           PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+           PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+           CAR+CELULAR+INTERNET+
+           id_mun, data=table, family = 'gaussian')
+
+Distance.Cat <- seq
+marg<-marg(mod = g, var_interest = c("Distance.Cat"), type = 'levels', data=data[data$PRDstr==1 & data$highTURNOUT==1,],  cofint=.95)
+
+#getting confidence intervals for the expected PN turnout in PRD strongholds
+mean <- marg[[1]]$Margin
+upper <- marg[[1]]$'Lower CI (95%)'
+lower <- marg[[1]]$'Upper CI (95%)'
+
+dataPRI<-data.frame(cbind(Distance.Cat, mean, upper, lower))
+dataPRI$distance<-(1/dataPRI$Distance.Cat)
+```
+
+
+```{r}
+#same for AMLO
+g <- glm(AMLOa ~ Distance.Cat*PRIstr*highTURNOUT+Distance.Cat*PRDstr*highTURNOUT+Distance.Cat*PANstr*highTURNOUT+     
+           PRI09a+PRD09a+PAN09a+PART09+
+           lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+           EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+           PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+           PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+           CAR+CELULAR+INTERNET+
+           id_mun, data=table, family = 'gaussian')
+
+marg<-marg(mod = g, var_interest = c("Distance.Cat"), type = 'levels', data=data[data$PRDstr==1 & data$highTURNOUT==1,],
+           at_var_interest = seq(1/20, 1/2.5, 1/1000), cofint=.95)
+
+mean <- marg[[1]]$Margin
+upper <- marg[[1]]$'Lower CI (95%)'
+lower <- marg[[1]]$'Upper CI (95%)'
+
+dataPRD<-data.frame(cbind(at.prox, mean, upper, lower))
+dataPRD$distance<-(1/dataPRD$at.prox)
+
+
+g <- glm(JVMa ~ Distance.Cat*PRIstr*highTURNOUT+Distance.Cat*PRDstr*highTURNOUT+Distance.Cat*PANstr*highTURNOUT+     
+           PRI09a+PRD09a+PAN09a+PART09+
+           lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+           EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+           PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+           PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+           CAR+CELULAR+INTERNET+
+           id_mun, data=data, family = 'gaussian')
+
+marg<-marg(mod = g, var_interest = c("proximity"), 
+           type = 'levels', data=data[data$PRDstr==1 & data$highTURNOUT==1,],
+           at_var_interest = seq(1/20, 1/2.5, 1/1000),cofint=.95)
+
+mean <- marg[[1]]$Margin
+upper <- marg[[1]]$'Lower CI (95%)'
+lower <- marg[[1]]$'Upper CI (95%)'
+
+dataPAN<-data.frame(cbind(at.prox, mean, upper, lower))
+dataPAN$distance<-(1/dataPAN$at.prox)
+
+datasim<-data.frame(rbind(dataPRI, dataPRD, dataPAN))
+
+datasim$dv<-NA
+datasim$dv[1:351]<-"Peña Nieto"
+datasim$dv[352:702]<-"López Obrador"
+datasim$dv[703:1053]<-"Vázquez Mota"
+
+ggplot()+
+  geom_line(data=datasim, aes(x=distance, y=mean,  linetype=dv))+
+  geom_ribbon(data=datasim, aes(x=distance,  ymin=lower, 
+                      ymax=upper, fill=dv),  alpha=0.5)+theme_bw()+
+  ylab("Predicted vote shares (%)")+
+  xlab("Distance to Soriana (km)")+xlim(2.5,20)+ylim(0,50)+ 
+  scale_fill_manual(values = c("#F0E442","red", "deepskyblue2"), name="")+
+  scale_linetype_manual(values=c("solid", "longdash","dotted"), name="" )+
+  theme(axis.text=element_text(size=18),
+        axis.title=element_text(size=18),
+        legend.text = element_text(size = 18))
+```
+
+
+
+
+
+The general plots from friday:
+```{r}
+plot(EPNa ~ distance, data = table)
+
+plot(EPNa ~ proximity, data = table)
+```
+
+
+```{r}
+plot(EPNa ~ Distance.Cat, xlim = c(0, 40), data = table)
 ```
 
