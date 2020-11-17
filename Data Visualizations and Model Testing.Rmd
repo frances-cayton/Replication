@@ -39,7 +39,7 @@ table <- data
 seq <- quantile(table$distance)
 seq <- seq[-5]
 seq <- as.numeric(seq)
-seq <- c(0, seq, 99.5835360)
+seq <- c(1, 5, 15, 20, 30, 50, 100)
 table$Distance.Cat <- cut(table$distance, breaks = seq)
 ```
 
@@ -114,9 +114,39 @@ benchmarkPRI.1.proximity <- lm( EPNa ~ proximity*PRIstr*highTURNOUT+
                          PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
                          CAR+CELULAR+INTERNET+
                          id_mun, data=table, x=TRUE, y=TRUE)
-```
 
-### Table 1
+
+benchmarkPRD.1.proximity <- lm( AMLOa ~ proximity*PRIstr*highTURNOUT+
+                        proximity*PRDstr*highTURNOUT+proximity*PANstr*highTURNOUT+     
+                         PRI09a+PRD09a+PAN09a+PART09+
+                         lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+                         EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+                         PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+                         PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+                         CAR+CELULAR+INTERNET+
+                         id_mun, data=table, x=TRUE, y=TRUE)
+
+
+benchmarkPAN.1.proximity <- lm( JVMa ~ proximity*PRIstr*highTURNOUT+proximity*PRDstr*highTURNOUT+proximity*PANstr*highTURNOUT+     
+                         PRI09a+PRD09a+PAN09a+PART09+
+                         lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+                         EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+                         PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+                         PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+                         CAR+CELULAR+INTERNET+
+                         id_mun, data=table, x=TRUE, y=TRUE)
+
+
+
+benchmarkPART.1.proximity <- lm( PART ~ proximity*PRIstr*highTURNOUT+proximity*PRDstr*highTURNOUT+proximity*PANstr*highTURNOUT+     
+                          PRI09a+PRD09a+PAN09a+PART09+
+                          lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+                          EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+                          PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+                          PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+                          CAR+CELULAR+INTERNET+
+                          id_mun, data=table, x=TRUE, y=TRUE)
+```
 
 
 ```{r}
@@ -124,6 +154,44 @@ summary(benchmarkPRI.1)
 summary(benchmarkPRI.1.proximity)
 ```
 
+### Table 1
+
+
+```{r}
+stargazer(coeftest(benchmarkPRI.1), coeftest(benchmarkPRD.1), coeftest(benchmarkPAN.1), coeftest(benchmarkPART.1),style = "qje", type = "text", star.cutoffs = c(0.05, 0.01, 0.001), digits=3,
+          covariate.labels = c("Proximity", "PRI stronghold", "High Mobilization", "PRD stronghold","PAN stronghold", "PRI 2009", "PRD2009", "PAN2009", "Turnout 2009", "Population Log", "Population over 18 ",
+                               "Population over 65", "Area", "Density", "Indigenous","Catholic","Nonreligious","Education","College degree","Illiteracy","Inhabitants per house","Population in the labor market",
+                               "Female population in the labor market", "No insurance","Female head of household","Inhabitants per room", "Dirt floor", "All services", "No services", "Car", "Mobile phone", "Internet", "ACULCO" , "ALMOLOYA DE JUAREZ " , 
+                               "ALMOLOYA DEL RIO" , "AMANALCO" , "AMECAMECA" , "APAXCO" , "ATENCO" , "ATIZAPAN" , "ATIZAPAN DE ZARAGOZA" , "AXAPUSCO" , "AYAPANGO" , "CALIMAYA" , "CAPULHUAC" , "CHALCO" , "CHAPULTEPEC" ,
+                               "CHIAUTLA" , "CHICOLOAPAN" , "CHICONCUAC" , "CHIMALHUACAN" , "COACALCO DE BERRIOZABAL" , "COCOTITLAN" , "COYOTEPEC" , "CUAUTITLAN" , "CUAUTITLAN IZCALLI" , "ECATEPEC DE MORELOS" , "HUEHUETOCA",
+                               "HUEYPOXTLA" , "HUIXQUILUCAN" , "ISIDRO FABELA" , "IXTAPALUCA" , "IXTLAHUACA" , "JALTENCO" , "JILOTEPEC" , "JILOTZINGO" , "JIQUIPILCO" , "JOCOTITLAN" , "JOQUICINGO" , "JUCHITEPEC" , "LA PAZ" ,
+                               "LERMA" , "MELCHOR OCAMPO" , "METEPEC" , "MEXICALTZINGO" , "MORELOS" , "NAUCALPAN DE JUAREZ" , "NEXTLALPAN" , "NEZAHUALCOYOTL" , "NICOLAS ROMERO" , "OCOYOACAC" , "OCUILAN" , "OTUMBA" , 
+                               "OTZOLOTEPEC" , "PAPALOTLA" , "POLOTITLAN" , "RAYON" , "SAN ANTONIO LA ISLA" , "SAN FELIPE DEL PROGRESO" , "SAN MARTIN DE LAS PIRAMIDES" , "SAN MATEO ATENCO" , "SOYANIQUILPAN DE JUAREZ" , "TECAMAC" ,
+                               "TEMAMATLA" , "TEMASCALAPA" , "TEMOAYA" , "TENANGO DEL AIRE" , "TENANGO DEL VALLE" , "TEOLOYUCAN" , "TEOTIHUACAN" , "TEPETLAOXTOC" , "TEPOTZOTLAN" , "TEQUIXQUIAC" , "TEXCALYACAC" , "TEXCOCO" , "TEZOYUCA" ,
+                               "TIANGUISTENCO" , "TLALMANALCO" , "TLALNEPANTLA DE BAZ" , "TOLUCA" , "TONANITLA" , "TULTEPEC" , "TULTITLAN" , "VALLE DE CHALCO SOLIDARIDAD" , "VILLA DE ALLEND" , "VILLA DEL CARBON" , "VILLA VICTORIA" , 
+                               "XALATLACO" , "XONACATLAN" , "ZINACANTEPEC" , "ZUMPANGO" , "ALVARO OBREGON" , "AZCAPOTZALCO" , "BENITO JUAREZ" , "COYOACAN" , "CUAJIMALPA DE MORELOS" , "CUAUHTEMOC" , "GUSTAVO A. MADERO" , "IZTACALCO" , 
+                               "IZTAPALAPA" , "MAGDALENA CONTRERAS" , "MIGUEL HIDALGO" , "MILPA ALTA" , "TLAHUAC" , "TLALPAN" , "VENUSTIANO CARRANZA" , "XOCHIMILCO"))
+```
+
+
+```{r}
+stargazer(coeftest(benchmarkPRI.1.proximity), coeftest(benchmarkPRD.1.proximity), coeftest(benchmarkPAN.1.proximity), coeftest(benchmarkPART.1.proximity),style = "qje", type = "text", star.cutoffs = c(0.05, 0.01, 0.001), digits=3,
+          covariate.labels = c("Proximity", "PRI stronghold", "High Mobilization", "PRD stronghold","PAN stronghold", "PRI 2009", "PRD2009", "PAN2009", "Turnout 2009", "Population Log", "Population over 18 ",
+                               "Population over 65", "Area", "Density", "Indigenous","Catholic","Nonreligious","Education","College degree","Illiteracy","Inhabitants per house","Population in the labor market",
+                               "Female population in the labor market", "No insurance","Female head of household","Inhabitants per room", "Dirt floor", "All services", "No services", "Car", "Mobile phone", "Internet", "ACULCO" , "ALMOLOYA DE JUAREZ " , 
+                               "ALMOLOYA DEL RIO" , "AMANALCO" , "AMECAMECA" , "APAXCO" , "ATENCO" , "ATIZAPAN" , "ATIZAPAN DE ZARAGOZA" , "AXAPUSCO" , "AYAPANGO" , "CALIMAYA" , "CAPULHUAC" , "CHALCO" , "CHAPULTEPEC" ,
+                               "CHIAUTLA" , "CHICOLOAPAN" , "CHICONCUAC" , "CHIMALHUACAN" , "COACALCO DE BERRIOZABAL" , "COCOTITLAN" , "COYOTEPEC" , "CUAUTITLAN" , "CUAUTITLAN IZCALLI" , "ECATEPEC DE MORELOS" , "HUEHUETOCA",
+                               "HUEYPOXTLA" , "HUIXQUILUCAN" , "ISIDRO FABELA" , "IXTAPALUCA" , "IXTLAHUACA" , "JALTENCO" , "JILOTEPEC" , "JILOTZINGO" , "JIQUIPILCO" , "JOCOTITLAN" , "JOQUICINGO" , "JUCHITEPEC" , "LA PAZ" ,
+                               "LERMA" , "MELCHOR OCAMPO" , "METEPEC" , "MEXICALTZINGO" , "MORELOS" , "NAUCALPAN DE JUAREZ" , "NEXTLALPAN" , "NEZAHUALCOYOTL" , "NICOLAS ROMERO" , "OCOYOACAC" , "OCUILAN" , "OTUMBA" , 
+                               "OTZOLOTEPEC" , "PAPALOTLA" , "POLOTITLAN" , "RAYON" , "SAN ANTONIO LA ISLA" , "SAN FELIPE DEL PROGRESO" , "SAN MARTIN DE LAS PIRAMIDES" , "SAN MATEO ATENCO" , "SOYANIQUILPAN DE JUAREZ" , "TECAMAC" ,
+                               "TEMAMATLA" , "TEMASCALAPA" , "TEMOAYA" , "TENANGO DEL AIRE" , "TENANGO DEL VALLE" , "TEOLOYUCAN" , "TEOTIHUACAN" , "TEPETLAOXTOC" , "TEPOTZOTLAN" , "TEQUIXQUIAC" , "TEXCALYACAC" , "TEXCOCO" , "TEZOYUCA" ,
+                               "TIANGUISTENCO" , "TLALMANALCO" , "TLALNEPANTLA DE BAZ" , "TOLUCA" , "TONANITLA" , "TULTEPEC" , "TULTITLAN" , "VALLE DE CHALCO SOLIDARIDAD" , "VILLA DE ALLEND" , "VILLA DEL CARBON" , "VILLA VICTORIA" , 
+                               "XALATLACO" , "XONACATLAN" , "ZINACANTEPEC" , "ZUMPANGO" , "ALVARO OBREGON" , "AZCAPOTZALCO" , "BENITO JUAREZ" , "COYOACAN" , "CUAJIMALPA DE MORELOS" , "CUAUHTEMOC" , "GUSTAVO A. MADERO" , "IZTACALCO" , 
+                               "IZTAPALAPA" , "MAGDALENA CONTRERAS" , "MIGUEL HIDALGO" , "MILPA ALTA" , "TLAHUAC" , "TLALPAN" , "VENUSTIANO CARRANZA" , "XOCHIMILCO"))
+```
+
+
+## Making plots: 
 ```{r}
 ####Predicted vote shares in PRD Mobilized Strongholds
 
