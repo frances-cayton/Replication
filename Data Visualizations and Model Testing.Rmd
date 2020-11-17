@@ -32,13 +32,10 @@ library(spatstat)
 
 ```{r}
 load("datawork.RData")
-table <- data
 ```
 
+
 ```{r}
-seq <- quantile(table$distance)
-seq <- seq[-5]
-seq <- as.numeric(seq)
 seq <- c(1, 5, 15, 20, 30, 50, 100)
 table$Distance.Cat <- cut(table$distance, breaks = seq)
 ```
@@ -52,8 +49,8 @@ Re-estimating the model using the coarsened distance and classical standard erro
 
 ```{r}
 #reclassifying municipality and district as factor variables
-data$id_mun<-factor(data$id_mun)
-data$id_dist<-factor(data$id_dist)
+table$id_mun<-factor(table$id_mun)
+table$id_dist<-factor(table$id_dist)
 ```
 
 
@@ -150,8 +147,8 @@ benchmarkPART.1.proximity <- lm( PART ~ proximity*PRIstr*highTURNOUT+proximity*P
 
 
 ```{r}
-summary(benchmarkPRI.1)
-summary(benchmarkPRI.1.proximity)
+#summary(benchmarkPRI.1)
+#summary(benchmarkPRI.1.proximity)
 ```
 
 ### Table 1
