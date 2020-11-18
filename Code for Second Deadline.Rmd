@@ -772,8 +772,9 @@ ggplot()+
         legend.text = element_text(size = 18))
 ```
 
-## Table 3: Estimation of the Effects (this still doesn't produce a table)
+## Table 3: Estimation of the Effects #Molly (this still doesn't produce a table)
 ```{r}
+#data
 g <- glm(EPNa ~ proximity*PRIstr*highTURNOUT+proximity*PRDstr*highTURNOUT+proximity*PANstr*highTURNOUT+     
            PRI09a+PRD09a+PAN09a+PART09+
            lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
@@ -829,11 +830,10 @@ high<-round(sum((marg[[1]]$`Upper CI (95%)`[2]/100)*data[data$PRDstr==1 & data$h
 mean<-round(sum((marg[[1]]$`Margin`[2]/100)*data[data$PRDstr==1 & data$highTURNOUT==1,]$ln2012))
 
 PRDat2.5<-c(mean-sum(data[data$PRDstr==1 & data$highTURNOUT==1,]$amlo2012), low-sum(data[data$PRDstr==1 & data$highTURNOUT==1,]$amlo2012), high-sum(data[data$PRDstr==1 & data$highTURNOUT==1,]$amlo2012))
-
 ```
 
 ## Figure 3
-# I had to edit lines 850 and 855 to make it work
+# Molly: I had to edit lines 850 and 855 to make it work
 ```{r}
 results <- read.table(header=T, con <- textConnection('
 Stronghold DV	Coefficient	StdError	Model	 Order
