@@ -34,7 +34,7 @@ load("datawork.RData")
 
 
 ```{r}
-seq <- c(.5, 1, 3, 5, 10, 25, 100)
+seq <- c(.5, 1, 3, 5, 10, 20, 100)
 table$Distance.Cat <- cut(table$distance, breaks = seq)
 ```
 
@@ -200,6 +200,9 @@ knitr::kable(broom::tidy(benchmarkPRI.1.proximity))
 knitr::kable(broom::tidy(benchmarkPRI.1.distance))
 ```
 
+```{r}
+table %>% filter(highTURNOUT == 1 && PRDstr == 1)
+```
 
 
 ## Making plots: 
@@ -376,11 +379,12 @@ ggplot()+
 ```
 
 
-Trying to re-create this with the coarsened... where I am running into problems...
+So, the `PRDstr*highTURNOUT` interaction is creating near multicollinearity here.  I removed the `Distance*highTurnout*PRDstr` interaction for now, but will come back and we can try to fix it. Chengyu, if you can figure it out let me know. 
+
 ```{r}
 ####Predicted vote shares in PRD Mobilized Strongholds
 
-g <- glm(EPNa ~ Distance.Cat*PRIstr*highTURNOUT+Distance.Cat*PRDstr*highTURNOUT+Distance.Cat*PANstr*highTURNOUT+  
+g <- glm(EPNa ~ Distance.Cat*PRIstr*highTURNOUT+Distance.Cat*PANstr*highTURNOUT+PRDstr+
            PRI09a+PRD09a+PAN09a+PART09+
            lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
            EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
@@ -389,7 +393,7 @@ g <- glm(EPNa ~ Distance.Cat*PRIstr*highTURNOUT+Distance.Cat*PRDstr*highTURNOUT+
            CAR+CELULAR+INTERNET+
            id_mun, data=table, family = 'gaussian')
 
-marg<-marg(mod = g, var_interest = c("Distance.Cat"), type = 'levels', data=table[table$PRDstr==1 & table$highTURNOUT==1,],  cofint=.95)
+marg<-marg(mod = g, var_interest = c("Distance.Cat"), type = 'levels', data=table[table$PRDstr==1 & table$highTURNOUT==1,])
 
 #getting confidence intervals for the expected PN turnout in PRD strongholds
 mean <- marg[[1]]$Margin
@@ -397,13 +401,10 @@ upper <- marg[[1]]$'Lower CI (95%)'
 lower <- marg[[1]]$'Upper CI (95%)'
 
 dataPRI<-data.frame(cbind(Distance.Cat, mean, upper, lower))
-dataPRI$distance<-(dataPRI$Distance.Cat)
-```
 
 
-```{r}
 #same for AMLO
-g <- glm(AMLOa ~ Distance.Cat*PRIstr*highTURNOUT+Distance.Cat*PRDstr*highTURNOUT+Distance.Cat*PANstr*highTURNOUT+     
+g <- glm(AMLOa ~ Distance.Cat*PRIstr*highTURNOUT+Distance.Cat*PANstr*highTURNOUT+PRDstr+
            PRI09a+PRD09a+PAN09a+PART09+
            lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
            EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
@@ -412,50 +413,49 @@ g <- glm(AMLOa ~ Distance.Cat*PRIstr*highTURNOUT+Distance.Cat*PRDstr*highTURNOUT
            CAR+CELULAR+INTERNET+
            id_mun, data=table, family = 'gaussian')
 
-marg<-marg(mod = g, var_interest = c("Distance.Cat"), type = 'levels', data=data[data$PRDstr==1 & data$highTURNOUT==1,],
-           at_var_interest = seq(1/20, 1/2.5, 1/1000), cofint=.95)
+marg<-marg(mod = g, var_interest = c("Distance.Cat"), type = 'levels', data=table[table$PRDstr==1 & table$highTURNOUT==1,])
 
 mean <- marg[[1]]$Margin
 upper <- marg[[1]]$'Lower CI (95%)'
 lower <- marg[[1]]$'Upper CI (95%)'
 
-dataPRD<-data.frame(cbind(at.prox, mean, upper, lower))
-dataPRD$distance<-(1/dataPRD$at.prox)
+
+dataPRD<-data.frame(cbind(Distance.Cat, mean, upper, lower))
 
 
-g <- glm(JVMa ~ Distance.Cat*PRIstr*highTURNOUT+Distance.Cat*PRDstr*highTURNOUT+Distance.Cat*PANstr*highTURNOUT+     
+g <- glm(JVMa ~ Distance.Cat*PRIstr*highTURNOUT+PRDstr+Distance.Cat*PANstr*highTURNOUT+     
            PRI09a+PRD09a+PAN09a+PART09+
            lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
            EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
            PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
            PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
            CAR+CELULAR+INTERNET+
-           id_mun, data=data, family = 'gaussian')
+           id_mun, data=table, family = 'gaussian')
 
-marg<-marg(mod = g, var_interest = c("proximity"), 
-           type = 'levels', data=data[data$PRDstr==1 & data$highTURNOUT==1,],
-           at_var_interest = seq(1/20, 1/2.5, 1/1000),cofint=.95)
+marg<-marg(mod = g, var_interest = c("Distance.Cat"), type = 'levels', data=table[table$PRDstr==1 & table$highTURNOUT==1,])
 
 mean <- marg[[1]]$Margin
 upper <- marg[[1]]$'Lower CI (95%)'
 lower <- marg[[1]]$'Upper CI (95%)'
 
-dataPAN<-data.frame(cbind(at.prox, mean, upper, lower))
-dataPAN$distance<-(1/dataPAN$at.prox)
+
+dataPAN<-data.frame(cbind(Distance.Cat, mean, upper, lower))
 
 datasim<-data.frame(rbind(dataPRI, dataPRD, dataPAN))
 
 datasim$dv<-NA
-datasim$dv[1:351]<-"Peña Nieto"
-datasim$dv[352:702]<-"López Obrador"
-datasim$dv[703:1053]<-"Vázquez Mota"
+datasim$dv[1:7]<-"Peña Nieto"
+datasim$dv[8:14]<-"López Obrador"
+datasim$dv[15:21]<-"Vázquez Mota"
+```
 
+```{r}
 ggplot()+
-  geom_line(data=datasim, aes(x=distance, y=mean,  linetype=dv))+
-  geom_ribbon(data=datasim, aes(x=distance,  ymin=lower, 
+  geom_line(data=datasim, aes(x=Distance.Cat, y=mean,  linetype=dv))+
+  geom_ribbon(data=datasim, aes(x=Distance.Cat,  ymin=lower, 
                       ymax=upper, fill=dv),  alpha=0.5)+theme_bw()+
   ylab("Predicted vote shares (%)")+
-  xlab("Distance to Soriana (km)")+xlim(2.5,20)+ylim(0,50)+ 
+  xlab("Distance to Soriana (km)")+xlim(0, 100)+ylim(0,50)+ 
   scale_fill_manual(values = c("#F0E442","red", "deepskyblue2"), name="")+
   scale_linetype_manual(values=c("solid", "longdash","dotted"), name="" )+
   theme(axis.text=element_text(size=18),
