@@ -153,14 +153,9 @@ g <- glm( EPNa ~ distance*PRIstr*highTURNOUT+distance*PRDstr*highTURNOUT+distanc
            PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
            CAR+CELULAR+INTERNET+
            id_mun, data=table, family = 'gaussian')
-```
 
-```{r}
-#at.prox <- seq(1/20, 1/2.5, 1/1000)
-marg<-marg(mod = g, var_interest = c("distance"), type = 'levels')
-
-#data=data[data$PRDstr==1 & data$highTURNOUT==1,],
-           #at_var_interest = seq(1/20, 1/2.5, 1/1000),  cofint=.95)
+distance <- seq(from = min(table$distance), to = max(table$distance), length.out = 3)
+marg<-marg(mod = g, var_interest = c("distance"), type = 'levels', data=table[table$PRDstr==1 & table$highTURNOUT==1,],  cofint=.95)
 ```
 
 ```{r}
@@ -169,7 +164,7 @@ mean <- marg[[1]]$Margin
 upper <- marg[[1]]$'Lower CI (95%)'
 lower <- marg[[1]]$'Upper CI (95%)'
 
-dataPRI<-data.frame(cbind(mean, upper, lower))
+dataPRI<-data.frame(cbind(distance, mean, upper, lower))
 #dataPRI$distance<-(1/dataPRI$at.prox)
 ```
 
@@ -184,18 +179,19 @@ g <- glm(AMLOa ~ distance*PRIstr*highTURNOUT+distance*PRDstr*highTURNOUT+distanc
            CAR+CELULAR+INTERNET+
            id_mun, data=table, family = 'gaussian')
 
-marg<-marg(mod = g, var_interest = c("distance"), type = 'levels', #data=data[data$PRDstr==1 & data$highTURNOUT==1,],
-           at_var_interest = seq(1/20, 1/2.5, 1/1000), cofint=.95)
+distance <- seq(from = min(table$distance), to = max(table$distance), length.out = 3)
+marg<-marg(mod = g, var_interest = c("distance"), type = 'levels', data=table[table$PRDstr==1 & table$highTURNOUT==1,],cofint=.95)
 
 mean <- marg[[1]]$Margin
 upper <- marg[[1]]$'Lower CI (95%)'
 lower <- marg[[1]]$'Upper CI (95%)'
 
-dataPRD<-data.frame(cbind(mean, upper, lower))
+dataPRD<-data.frame(cbind(distance, mean, upper, lower))
 #dataPRD$distance<-(1/dataPRD$at.prox)
 ```
 
 ```{r}
+#same for JVMa
 g <- glm(JVMa ~ distance*PRIstr*highTURNOUT+distance*PRDstr*highTURNOUT+distance*PANstr*highTURNOUT+     
            PRI09a+PRD09a+PAN09a+PART09+
            lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
@@ -205,31 +201,37 @@ g <- glm(JVMa ~ distance*PRIstr*highTURNOUT+distance*PRDstr*highTURNOUT+distance
            CAR+CELULAR+INTERNET+
            id_mun, data=table, family = 'gaussian')
 
-marg<-marg(mod = g, var_interest = c("distance"), 
-           type = 'levels', 
-           #data=data[data$PRDstr==1 & data$highTURNOUT==1,],
-           at_var_interest = seq(1/20, 1/2.5, 1/1000),cofint=.95)
+distance <- seq(from = min(table$distance), to = max(table$distance), length.out = 3)
+marg<-marg(mod = g, var_interest = c("distance"), type = 'levels', data=table[table$PRDstr==1 & table$highTURNOUT==1,], cofint=.95)
 
 mean <- marg[[1]]$Margin
 upper <- marg[[1]]$'Lower CI (95%)'
 lower <- marg[[1]]$'Upper CI (95%)'
 
-dataPAN<-data.frame(cbind(at.prox, mean, upper, lower))
-dataPAN$distance<-(1/dataPAN$at.prox)
+dataPAN<-data.frame(cbind(distance, mean, upper, lower))
+#dataPAN$distance<-(1/dataPAN$at.prox)
+```
 
+```{r}
 datasim<-data.frame(rbind(dataPRI, dataPRD, dataPAN))
 
 datasim$dv<-NA
-datasim$dv[1:351]<-"Peña Nieto"
-datasim$dv[352:702]<-"López Obrador"
-datasim$dv[703:1053]<-"Vázquez Mota"
+datasim$dv[1:99]<-"Peña Nieto"
+datasim$dv[100:198]<-"López Obrador"
+datasim$dv[199:297]<-"Vázquez Mota"
+```
 
+```{r}
+plot(datasim$distance, datasim$mean)
+```
+
+```{r}
 ggplot()+
   geom_line(data=datasim, aes(x=distance, y=mean,  linetype=dv))+
   geom_ribbon(data=datasim, aes(x=distance,  ymin=lower, 
                       ymax=upper, fill=dv),  alpha=0.5)+theme_bw()+
   ylab("Predicted vote shares (%)")+
-  xlab("Distance to Soriana (km)")+xlim(2.5,20)+ylim(0,50)+ 
+  xlab("Distance to Soriana (km)") +
   scale_fill_manual(values = c("#F0E442","red", "deepskyblue2"), name="")+
   scale_linetype_manual(values=c("solid", "longdash","dotted"), name="" )+
   theme(axis.text=element_text(size=18),
