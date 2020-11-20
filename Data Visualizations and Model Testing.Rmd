@@ -260,7 +260,9 @@ knitr::kable(broom::tidy(benchmarkPRI.1.Quantile))
 ```
 
 ```{r}
-table %>% filter(highTURNOUT == 1 && PRDstr == 1)
+table %>% filter(highTURNOUT == 1 & PRDstr == 1) -> subset
+nrow(subset)
+summary(subset$Distance.Quant)
 ```
 
 
