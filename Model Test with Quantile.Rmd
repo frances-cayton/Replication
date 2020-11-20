@@ -1,0 +1,373 @@
+---
+title: "Model Test with Quantiles"
+output: html_document
+---
+
+```{r, results = 'hide', message = FALSE}
+library(foreign)
+library(stargazer)
+library(arm)
+library(rms)
+library(msm)
+library(systemfit)
+library(xtable)
+library(gtools)
+library(multiwayvcov)
+library(numDeriv)
+library(interplot)
+library(modmarg)
+library(tidyverse)
+library(stats)
+library(haven)
+library(systemfit)
+library(nnet)
+library(sjmisc)
+library(maptools)
+library(rgeos)
+library(Imap)
+library(spatstat)
+```
+
+```{r}
+load("datawork.RData")
+```
+
+
+```{r}
+quantile <- quantile(table$distance, c(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1))
+table$Distance.Cat <- cut(table$distance, breaks = quantile)
+```
+
+```{r}
+table$Distance.Cat <- as.factor(table$Distance.Cat)
+```
+
+
+Re-estimating the model using the coarsened distance and classical standard errors
+
+```{r}
+#reclassifying municipality and district as factor variables
+table$id_mun<-factor(table$id_mun)
+table$id_dist<-factor(table$id_dist)
+```
+
+
+```{r}
+benchmarkPRI.1 <- lm( EPNa ~ Distance.Cat*PRIstr*highTURNOUT+
+                        Distance.Cat*PRDstr*highTURNOUT+Distance.Cat*PANstr*highTURNOUT+ 
+                         PRI09a+PRD09a+PAN09a+PART09+
+                         lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+                         EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+                         PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+                         PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+                         CAR+CELULAR+INTERNET+
+                         id_mun, data=table, x=TRUE, y=TRUE)
+
+
+#The same model but testing for other parties: 
+
+benchmarkPRD.1 <- lm( AMLOa ~ Distance.Cat*PRIstr*highTURNOUT+
+                        Distance.Cat*PRDstr*highTURNOUT+Distance.Cat*PANstr*highTURNOUT+     
+                         PRI09a+PRD09a+PAN09a+PART09+
+                         lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+                         EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+                         PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+                         PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+                         CAR+CELULAR+INTERNET+
+                         id_mun, data=table, x=TRUE, y=TRUE)
+
+
+benchmarkPAN.1 <- lm( JVMa ~ Distance.Cat*PRIstr*highTURNOUT+Distance.Cat*PRDstr*highTURNOUT+Distance.Cat*PANstr*highTURNOUT+     
+                         PRI09a+PRD09a+PAN09a+PART09+
+                         lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+                         EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+                         PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+                         PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+                         CAR+CELULAR+INTERNET+
+                         id_mun, data=table, x=TRUE, y=TRUE)
+
+
+
+benchmarkPART.1 <- lm( PART ~ Distance.Cat*PRIstr*highTURNOUT+Distance.Cat*PRDstr*highTURNOUT+Distance.Cat*PANstr*highTURNOUT+     
+                          PRI09a+PRD09a+PAN09a+PART09+
+                          lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+                          EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+                          PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+                          PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+                          CAR+CELULAR+INTERNET+
+                          id_mun, data=table, x=TRUE, y=TRUE)
+
+```
+
+```{r}
+benchmarkPRI.1.proximity <- lm( EPNa ~ proximity*PRIstr*highTURNOUT+
+                        proximity*PRDstr*highTURNOUT+proximity*PANstr*highTURNOUT+ 
+                         PRI09a+PRD09a+PAN09a+PART09+
+                         lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+                         EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+                         PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+                         PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+                         CAR+CELULAR+INTERNET+
+                         id_mun, data=table, x=TRUE, y=TRUE)
+
+
+benchmarkPRD.1.proximity <- lm( AMLOa ~ proximity*PRIstr*highTURNOUT+
+                        proximity*PRDstr*highTURNOUT+proximity*PANstr*highTURNOUT+     
+                         PRI09a+PRD09a+PAN09a+PART09+
+                         lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+                         EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+                         PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+                         PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+                         CAR+CELULAR+INTERNET+
+                         id_mun, data=table, x=TRUE, y=TRUE)
+
+
+benchmarkPAN.1.proximity <- lm( JVMa ~ proximity*PRIstr*highTURNOUT+proximity*PRDstr*highTURNOUT+proximity*PANstr*highTURNOUT+     
+                         PRI09a+PRD09a+PAN09a+PART09+
+                         lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+                         EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+                         PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+                         PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+                         CAR+CELULAR+INTERNET+
+                         id_mun, data=table, x=TRUE, y=TRUE)
+
+
+
+benchmarkPART.1.proximity <- lm( PART ~ proximity*PRIstr*highTURNOUT+proximity*PRDstr*highTURNOUT+proximity*PANstr*highTURNOUT+     
+                          PRI09a+PRD09a+PAN09a+PART09+
+                          lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+                          EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+                          PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+                          PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+                          CAR+CELULAR+INTERNET+
+                          id_mun, data=table, x=TRUE, y=TRUE)
+```
+
+
+```{r}
+#summary(benchmarkPRI.1)
+#summary(benchmarkPRI.1.proximity)
+```
+
+### Table 1
+
+
+```{r}
+stargazer(coeftest(benchmarkPRI.1), coeftest(benchmarkPRD.1), coeftest(benchmarkPAN.1), coeftest(benchmarkPART.1),style = "qje", type = "text", star.cutoffs = c(0.05, 0.01, 0.001), digits=3,
+          covariate.labels = c("Proximity", "PRI stronghold", "High Mobilization", "PRD stronghold","PAN stronghold", "PRI 2009", "PRD2009", "PAN2009", "Turnout 2009", "Population Log", "Population over 18 ",
+                               "Population over 65", "Area", "Density", "Indigenous","Catholic","Nonreligious","Education","College degree","Illiteracy","Inhabitants per house","Population in the labor market",
+                               "Female population in the labor market", "No insurance","Female head of household","Inhabitants per room", "Dirt floor", "All services", "No services", "Car", "Mobile phone", "Internet", "ACULCO" , "ALMOLOYA DE JUAREZ " , 
+                               "ALMOLOYA DEL RIO" , "AMANALCO" , "AMECAMECA" , "APAXCO" , "ATENCO" , "ATIZAPAN" , "ATIZAPAN DE ZARAGOZA" , "AXAPUSCO" , "AYAPANGO" , "CALIMAYA" , "CAPULHUAC" , "CHALCO" , "CHAPULTEPEC" ,
+                               "CHIAUTLA" , "CHICOLOAPAN" , "CHICONCUAC" , "CHIMALHUACAN" , "COACALCO DE BERRIOZABAL" , "COCOTITLAN" , "COYOTEPEC" , "CUAUTITLAN" , "CUAUTITLAN IZCALLI" , "ECATEPEC DE MORELOS" , "HUEHUETOCA",
+                               "HUEYPOXTLA" , "HUIXQUILUCAN" , "ISIDRO FABELA" , "IXTAPALUCA" , "IXTLAHUACA" , "JALTENCO" , "JILOTEPEC" , "JILOTZINGO" , "JIQUIPILCO" , "JOCOTITLAN" , "JOQUICINGO" , "JUCHITEPEC" , "LA PAZ" ,
+                               "LERMA" , "MELCHOR OCAMPO" , "METEPEC" , "MEXICALTZINGO" , "MORELOS" , "NAUCALPAN DE JUAREZ" , "NEXTLALPAN" , "NEZAHUALCOYOTL" , "NICOLAS ROMERO" , "OCOYOACAC" , "OCUILAN" , "OTUMBA" , 
+                               "OTZOLOTEPEC" , "PAPALOTLA" , "POLOTITLAN" , "RAYON" , "SAN ANTONIO LA ISLA" , "SAN FELIPE DEL PROGRESO" , "SAN MARTIN DE LAS PIRAMIDES" , "SAN MATEO ATENCO" , "SOYANIQUILPAN DE JUAREZ" , "TECAMAC" ,
+                               "TEMAMATLA" , "TEMASCALAPA" , "TEMOAYA" , "TENANGO DEL AIRE" , "TENANGO DEL VALLE" , "TEOLOYUCAN" , "TEOTIHUACAN" , "TEPETLAOXTOC" , "TEPOTZOTLAN" , "TEQUIXQUIAC" , "TEXCALYACAC" , "TEXCOCO" , "TEZOYUCA" ,
+                               "TIANGUISTENCO" , "TLALMANALCO" , "TLALNEPANTLA DE BAZ" , "TOLUCA" , "TONANITLA" , "TULTEPEC" , "TULTITLAN" , "VALLE DE CHALCO SOLIDARIDAD" , "VILLA DE ALLEND" , "VILLA DEL CARBON" , "VILLA VICTORIA" , 
+                               "XALATLACO" , "XONACATLAN" , "ZINACANTEPEC" , "ZUMPANGO" , "ALVARO OBREGON" , "AZCAPOTZALCO" , "BENITO JUAREZ" , "COYOACAN" , "CUAJIMALPA DE MORELOS" , "CUAUHTEMOC" , "GUSTAVO A. MADERO" , "IZTACALCO" , 
+                               "IZTAPALAPA" , "MAGDALENA CONTRERAS" , "MIGUEL HIDALGO" , "MILPA ALTA" , "TLAHUAC" , "TLALPAN" , "VENUSTIANO CARRANZA" , "XOCHIMILCO"))
+```
+
+
+```{r}
+stargazer(coeftest(benchmarkPRI.1.proximity), coeftest(benchmarkPRD.1.proximity), coeftest(benchmarkPAN.1.proximity), coeftest(benchmarkPART.1.proximity),style = "qje", type = "text", star.cutoffs = c(0.05, 0.01, 0.001), digits=3,
+          covariate.labels = c("Proximity", "PRI stronghold", "High Mobilization", "PRD stronghold","PAN stronghold", "PRI 2009", "PRD2009", "PAN2009", "Turnout 2009", "Population Log", "Population over 18 ",
+                               "Population over 65", "Area", "Density", "Indigenous","Catholic","Nonreligious","Education","College degree","Illiteracy","Inhabitants per house","Population in the labor market",
+                               "Female population in the labor market", "No insurance","Female head of household","Inhabitants per room", "Dirt floor", "All services", "No services", "Car", "Mobile phone", "Internet", "ACULCO" , "ALMOLOYA DE JUAREZ " , 
+                               "ALMOLOYA DEL RIO" , "AMANALCO" , "AMECAMECA" , "APAXCO" , "ATENCO" , "ATIZAPAN" , "ATIZAPAN DE ZARAGOZA" , "AXAPUSCO" , "AYAPANGO" , "CALIMAYA" , "CAPULHUAC" , "CHALCO" , "CHAPULTEPEC" ,
+                               "CHIAUTLA" , "CHICOLOAPAN" , "CHICONCUAC" , "CHIMALHUACAN" , "COACALCO DE BERRIOZABAL" , "COCOTITLAN" , "COYOTEPEC" , "CUAUTITLAN" , "CUAUTITLAN IZCALLI" , "ECATEPEC DE MORELOS" , "HUEHUETOCA",
+                               "HUEYPOXTLA" , "HUIXQUILUCAN" , "ISIDRO FABELA" , "IXTAPALUCA" , "IXTLAHUACA" , "JALTENCO" , "JILOTEPEC" , "JILOTZINGO" , "JIQUIPILCO" , "JOCOTITLAN" , "JOQUICINGO" , "JUCHITEPEC" , "LA PAZ" ,
+                               "LERMA" , "MELCHOR OCAMPO" , "METEPEC" , "MEXICALTZINGO" , "MORELOS" , "NAUCALPAN DE JUAREZ" , "NEXTLALPAN" , "NEZAHUALCOYOTL" , "NICOLAS ROMERO" , "OCOYOACAC" , "OCUILAN" , "OTUMBA" , 
+                               "OTZOLOTEPEC" , "PAPALOTLA" , "POLOTITLAN" , "RAYON" , "SAN ANTONIO LA ISLA" , "SAN FELIPE DEL PROGRESO" , "SAN MARTIN DE LAS PIRAMIDES" , "SAN MATEO ATENCO" , "SOYANIQUILPAN DE JUAREZ" , "TECAMAC" ,
+                               "TEMAMATLA" , "TEMASCALAPA" , "TEMOAYA" , "TENANGO DEL AIRE" , "TENANGO DEL VALLE" , "TEOLOYUCAN" , "TEOTIHUACAN" , "TEPETLAOXTOC" , "TEPOTZOTLAN" , "TEQUIXQUIAC" , "TEXCALYACAC" , "TEXCOCO" , "TEZOYUCA" ,
+                               "TIANGUISTENCO" , "TLALMANALCO" , "TLALNEPANTLA DE BAZ" , "TOLUCA" , "TONANITLA" , "TULTEPEC" , "TULTITLAN" , "VALLE DE CHALCO SOLIDARIDAD" , "VILLA DE ALLEND" , "VILLA DEL CARBON" , "VILLA VICTORIA" , 
+                               "XALATLACO" , "XONACATLAN" , "ZINACANTEPEC" , "ZUMPANGO" , "ALVARO OBREGON" , "AZCAPOTZALCO" , "BENITO JUAREZ" , "COYOACAN" , "CUAJIMALPA DE MORELOS" , "CUAUHTEMOC" , "GUSTAVO A. MADERO" , "IZTACALCO" , 
+                               "IZTAPALAPA" , "MAGDALENA CONTRERAS" , "MIGUEL HIDALGO" , "MILPA ALTA" , "TLAHUAC" , "TLALPAN" , "VENUSTIANO CARRANZA" , "XOCHIMILCO"))
+```
+
+
+## Making plots: 
+```{r}
+####Predicted vote shares in PRD Mobilized Strongholds
+
+g <- glm(EPNa ~ distance*PRIstr*highTURNOUT+distance*PRDstr*highTURNOUT+distance*PANstr*highTURNOUT+     
+           PRI09a+PRD09a+PAN09a+PART09+
+           lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+           EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+           PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+           PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+           CAR+CELULAR+INTERNET+
+           id_mun, data=table, family = 'gaussian')
+
+quant <- quantile(table$distance, c(0, 0.5, 1))
+marg<-marg(mod = g, var_interest = c("distance"), type = 'levels', data=table[table$PRDstr==1 & table$highTURNOUT==1,],
+            cofint=.95)
+
+#getting confidence intervals for the expected PN turnout in PRD strongholds
+mean <- marg[[1]]$Margin
+upper <- marg[[1]]$'Lower CI (95%)'
+lower <- marg[[1]]$'Upper CI (95%)'
+
+dataPRI<-data.frame(cbind(quant, mean, upper, lower))
+dataPRI$distance<-(1/dataPRI$quant)
+```
+
+```{r}
+#same for AMLO
+g <- glm(AMLOa ~ distance*PRIstr*highTURNOUT+distance*PRDstr*highTURNOUT+distance*PANstr*highTURNOUT+     
+           PRI09a+PRD09a+PAN09a+PART09+
+           lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+           EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+           PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+           PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+           CAR+CELULAR+INTERNET+
+           id_mun, data=table, family = 'gaussian')
+
+marg<-marg(mod = g, var_interest = c("distance"), type = 'levels', data=table[table$PRDstr==1 & table$highTURNOUT==1,],
+            cofint=.95)
+
+mean <- marg[[1]]$Margin
+upper <- marg[[1]]$'Lower CI (95%)'
+lower <- marg[[1]]$'Upper CI (95%)'
+
+dataPRD<-data.frame(cbind(quant, mean, upper, lower))
+dataPRD$distance<-(1/dataPRD$quant)
+```
+
+```{r}
+g <- glm(JVMa ~ distance*PRIstr*highTURNOUT+distance*PRDstr*highTURNOUT+distance*PANstr*highTURNOUT+     
+           PRI09a+PRD09a+PAN09a+PART09+
+           lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+           EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+           PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+           PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+           CAR+CELULAR+INTERNET+
+           id_mun, data=table, family = 'gaussian')
+
+marg<-marg(mod = g, var_interest = c("distance"), 
+           type = 'levels', data=table[table$PRDstr==1 & table$highTURNOUT==1,],
+            cofint=.95)
+
+mean <- marg[[1]]$Margin
+upper <- marg[[1]]$'Lower CI (95%)'
+lower <- marg[[1]]$'Upper CI (95%)'
+
+dataPAN<-data.frame(cbind(quant, mean, upper, lower))
+dataPAN$distance<-(1/dataPAN$quant)
+```
+
+```{r}
+datasim<-data.frame(rbind(dataPRI, dataPRD, dataPAN))
+
+datasim$dv<-NA
+datasim$dv[1:99]<-"Peña Nieto"
+datasim$dv[100:198]<-"López Obrador"
+datasim$dv[199:297]<-"Vázquez Mota"
+```
+
+```{r}
+ggplot()+
+  geom_line(data=datasim, aes(x=distance, y=mean,  linetype=dv))+
+  geom_ribbon(data=datasim, aes(x=distance,  ymin=lower, 
+                      ymax=upper, fill=dv),  alpha=0.5)+theme_bw()+
+  ylab("Predicted vote shares (%)")+
+  xlab("Distance to Soriana (km)") +
+  scale_fill_manual(values = c("#F0E442","red", "deepskyblue2"), name="")+
+  scale_linetype_manual(values=c("solid", "longdash","dotted"), name="" )+
+  theme(axis.text=element_text(size=18),
+        axis.title=element_text(size=18),
+        legend.text = element_text(size = 18))
+```
+
+```{r}
+data <- table
+```
+
+
+Trying to re-create this with the coarsened... where I am running into problems...
+```{r}
+####Predicted vote shares in PRD Mobilized Strongholds
+
+g <- glm(EPNa ~ Distance.Cat*PRIstr*highTURNOUT+Distance.Cat*PRDstr*highTURNOUT+Distance.Cat*PANstr*highTURNOUT+     
+           PRI09a+PRD09a+PAN09a+PART09+
+           lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+           EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+           PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+           PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+           CAR+CELULAR+INTERNET+
+           id_mun, data=table, family = 'gaussian')
+
+Distance.Cat <- seq
+marg<-marg(mod = g, var_interest = c("Distance.Cat"), type = 'levels', data=data[data$PRDstr==1 & data$highTURNOUT==1,],  cofint=.95)
+
+#getting confidence intervals for the expected PN turnout in PRD strongholds
+mean <- marg[[1]]$Margin
+upper <- marg[[1]]$'Lower CI (95%)'
+lower <- marg[[1]]$'Upper CI (95%)'
+
+dataPRI<-data.frame(cbind(Distance.Cat, mean, upper, lower))
+dataPRI$distance<-(1/dataPRI$Distance.Cat)
+```
+
+
+```{r}
+#same for AMLO
+g <- glm(AMLOa ~ Distance.Cat*PRIstr*highTURNOUT+Distance.Cat*PRDstr*highTURNOUT+Distance.Cat*PANstr*highTURNOUT+     
+           PRI09a+PRD09a+PAN09a+PART09+
+           lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+           EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+           PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+           PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+           CAR+CELULAR+INTERNET+
+           id_mun, data=table, family = 'gaussian')
+
+marg<-marg(mod = g, var_interest = c("Distance.Cat"), type = 'levels', data=data[data$PRDstr==1 & data$highTURNOUT==1,],
+           at_var_interest = seq(1/20, 1/2.5, 1/1000), cofint=.95)
+
+mean <- marg[[1]]$Margin
+upper <- marg[[1]]$'Lower CI (95%)'
+lower <- marg[[1]]$'Upper CI (95%)'
+
+dataPRD<-data.frame(cbind(at.prox, mean, upper, lower))
+dataPRD$distance<-(1/dataPRD$at.prox)
+
+
+g <- glm(JVMa ~ Distance.Cat*PRIstr*highTURNOUT+Distance.Cat*PRDstr*highTURNOUT+Distance.Cat*PANstr*highTURNOUT+     
+           PRI09a+PRD09a+PAN09a+PART09+
+           lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+           EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+           PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+           PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+           CAR+CELULAR+INTERNET+
+           id_mun, data=data, family = 'gaussian')
+
+marg<-marg(mod = g, var_interest = c("proximity"), 
+           type = 'levels', data=data[data$PRDstr==1 & data$highTURNOUT==1,],
+           at_var_interest = seq(1/20, 1/2.5, 1/1000),cofint=.95)
+
+mean <- marg[[1]]$Margin
+upper <- marg[[1]]$'Lower CI (95%)'
+lower <- marg[[1]]$'Upper CI (95%)'
+
+dataPAN<-data.frame(cbind(at.prox, mean, upper, lower))
+dataPAN$distance<-(1/dataPAN$at.prox)
+
+datasim<-data.frame(rbind(dataPRI, dataPRD, dataPAN))
+
+datasim$dv<-NA
+datasim$dv[1:351]<-"Peña Nieto"
+datasim$dv[352:702]<-"López Obrador"
+datasim$dv[703:1053]<-"Vázquez Mota"
+
+ggplot()+
+  geom_line(data=datasim, aes(x=distance, y=mean,  linetype=dv))+
+  geom_ribbon(data=datasim, aes(x=distance,  ymin=lower, 
+                      ymax=upper, fill=dv),  alpha=0.5)+theme_bw()+
+  ylab("Predicted vote shares (%)")+
+  xlab("Distance to Soriana (km)")+xlim(2.5,20)+ylim(0,50)+ 
+  scale_fill_manual(values = c("#F0E442","red", "deepskyblue2"), name="")+
+  scale_linetype_manual(values=c("solid", "longdash","dotted"), name="" )+
+  theme(axis.text=element_text(size=18),
+        axis.title=element_text(size=18),
+        legend.text = element_text(size = 18))
+```
