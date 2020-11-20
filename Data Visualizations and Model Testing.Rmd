@@ -336,7 +336,7 @@ dataPAN$distance<-(1/dataPAN$at.prox)
 datasim<-data.frame(rbind(dataPRI, dataPRD, dataPAN))
 
 datasim$dv<-NA
-datasim$dv[1:351]<-"Peña Nieto"
+datasim$dv[1:351]<-"Pena Nieto" # Chengyu: I have to change the name to Pena
 datasim$dv[352:702]<-"López Obrador"
 datasim$dv[703:1053]<-"Vázquez Mota"
 
@@ -420,7 +420,7 @@ dataPAN<-data.frame(cbind(at.dist, mean, upper, lower))
 datasim<-data.frame(rbind(dataPRI, dataPRD, dataPAN))
 
 datasim$dv<-NA
-datasim$dv[1:201]<-"Peña Nieto"
+datasim$dv[1:201]<-"Pena Nieto"
 datasim$dv[202:402]<-"López Obrador"
 datasim$dv[403:603]<-"Vázquez Mota"
 
@@ -459,6 +459,7 @@ marg<-marg(mod = g, var_interest = c("Distance.Cat"), type = 'levels', data=tabl
 mean <- marg[[1]]$Margin
 upper <- marg[[1]]$'Lower CI (95%)'
 lower <- marg[[1]]$'Upper CI (95%)'
+Distance.Cat <- c(1,5,15,20,30,50,100)
 
 dataPRI<-data.frame(cbind(Distance.Cat, mean, upper, lower))
 
@@ -504,7 +505,7 @@ dataPAN<-data.frame(cbind(Distance.Cat, mean, upper, lower))
 datasim<-data.frame(rbind(dataPRI, dataPRD, dataPAN))
 
 datasim$dv<-NA
-datasim$dv[1:7]<-"Peña Nieto"
+datasim$dv[1:7]<-"Pena Nieto"
 datasim$dv[8:14]<-"López Obrador"
 datasim$dv[15:21]<-"Vázquez Mota"
 ```
@@ -594,7 +595,7 @@ dataPAN<-data.frame(cbind(seq, mean, upper, lower))
 datasim<-data.frame(rbind(dataPRI, dataPRD, dataPAN))
 
 datasim$dv<-NA
-datasim$dv[1:4]<-"Peña Nieto"
+datasim$dv[1:4]<-"Pena Nieto"
 datasim$dv[5:8]<-"López Obrador"
 datasim$dv[9:12]<-"Vázquez Mota"
 ```

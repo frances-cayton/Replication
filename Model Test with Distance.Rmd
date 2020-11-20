@@ -216,7 +216,7 @@ dataPAN<-data.frame(cbind(distance, mean, upper, lower))
 datasim<-data.frame(rbind(dataPRI, dataPRD, dataPAN))
 
 datasim$dv<-NA
-datasim$dv[1:99]<-"Peña Nieto"
+datasim$dv[1:99]<-"Pena Nieto"
 datasim$dv[100:198]<-"López Obrador"
 datasim$dv[199:297]<-"Vázquez Mota"
 ```
