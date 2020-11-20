@@ -186,6 +186,75 @@ Third, the significance of the Figure 1's results generally remain the same in r
 
 Fourth, the Seemingly Unrelated Regression (SUR) results are quite different in R and Stata. Although still non-significant, the coefficients differ a lot. I attach all coefficients (in the paper and in the R replication) below.
 
+```{r model_figure_1_distance}
+
+# I use multinom from nnet here
+# Is constant term needed?
+m1_3_multinom_dis <- multinom(partyid ~ distance+edad+gender+education+sec+cellphone+internet+localidae, data = base_3)
+
+summary(m1_3_multinom_dis)
+
+formula_presi_dis <- presidentialapp ~ distance+edad+gender+education+sec+cellphone+internet+localidae
+m4_presi_dis <- glm(formula_presi_dis, data = base_3, family = "binomial")
+
+summary(m4_presi_dis)
+
+formula_gov_dis <- govapp ~ distance+edad+gender+education+sec+cellphone+internet+localidae
+m5_gov_dis <- glm(formula_gov_dis, data = base_3, family = "binomial")
+
+summary(m5_gov_dis)
+
+formula_congress_dis <- congressapp ~ distance+edad+gender+education+sec+cellphone+internet+localidae
+m6_congress_dis <- glm(formula_congress_dis, data = base_3, family = "binomial")
+
+summary(m6_congress_dis)
+
+# Seemingly Unrelated Regression by systemfit
+# which result to trust, single regress or SUR?
+
+sur_part1_dis <- systemfit(list(presi = formula_presi_dis, gov = formula_gov_dis, congress = formula_congress_dis), method = "SUR", data = base_3)
+
+summary(sur_part1_dis)
+
+formula_party_dis <- belongparty ~ distance+edad+gender+education+sec+cellphone+internet+localidae
+m7_party_dis <- glm(formula_party_dis, data = base_3, family = "binomial")
+
+summary(m7_party_dis)
+
+formula_union_dis <- belongunion ~ distance+edad+gender+education+sec+cellphone+internet+localidae
+m8_union_dis <- glm(formula_union_dis, data = base_3, family = "binomial")
+
+summary(m8_union_dis)
+
+formula_reli_dis <- belongreligiousgroup ~ distance+edad+gender+education+sec+cellphone+internet+localidae
+m9_reli_dis <- glm(formula_reli_dis, data = base_3, family = "binomial")
+
+summary(m9_reli_dis)
+
+# Seemingly Unrelated Regression by systemfit
+# which result to trust, single regress or SUR?
+
+sur_part2_dis <- systemfit(list(party = formula_party_dis, union = formula_union_dis, reli = formula_reli_dis), data = base_3)
+
+summary(sur_part2_dis)
+
+# The last four formula are purely estimated by SUR
+# Maybe replicate by regressing all formula separately?
+
+formula_interestpoli_dis <- interestpolitics ~ distance+edad+gender+education+sec+cellphone+internet+localidae
+
+formula_interestelec_dis <- interestelections ~ distance+edad+gender+education+sec+cellphone+internet+localidae
+
+formula_discuss_dis <- discusspolitics ~ distance+edad+gender+education+sec+cellphone+internet+localidae
+
+formula_follow_dis <- follownews ~ distance+edad+gender+education+sec+cellphone+internet+localidae
+
+sur_part3_dis <- systemfit(list(interestpoli = formula_interestpoli_dis, interestelec = formula_interestelec_dis, discuss = formula_discuss_dis, follow = formula_follow_dis), data = base_3)
+
+summary(sur_part3_dis)
+
+```
+
 ```{r graph_figure_1}
 
 results <- read.table(header=T, con <- textConnection('
