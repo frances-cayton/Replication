@@ -192,12 +192,71 @@ benchmarkPART.1.distance <- lm( PART ~ distance*PRIstr*highTURNOUT+distance*PRDs
 ```
 
 
+Making a quantile model:
+```{r}
+seq <- quantile(table$distance)
+table$Distance.Quant <- cut(table$distance, breaks = seq)
+```
+
+```{r}
+table$Distance.Quant <- as.factor(table$Distance.Quant)
+```
+
+```{r}
+
+benchmarkPRI.1.Quantile <- lm( EPNa ~ Distance.Quant*PRIstr*highTURNOUT+
+                        Distance.Quant*PRDstr*highTURNOUT+Distance.Quant*PANstr*highTURNOUT+ 
+                         PRI09a+PRD09a+PAN09a+PART09+
+                         lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+                         EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+                         PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+                         PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+                         CAR+CELULAR+INTERNET+
+                         id_mun, data=table, x=TRUE, y=TRUE)
+
+
+#The same model but testing for other parties: 
+
+benchmarkPRD.1.Quantile <- lm(AMLOa ~ Distance.Quant*PRIstr*highTURNOUT+
+                        Distance.Quant*PRDstr*highTURNOUT+Distance.Quant*PANstr*highTURNOUT+     
+                         PRI09a+PRD09a+PAN09a+PART09+
+                         lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+                         EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+                         PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+                         PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+                         CAR+CELULAR+INTERNET+
+                         id_mun, data=table, x=TRUE, y=TRUE)
+
+
+benchmarkPAN.1.Quantile <- lm( JVMa ~ Distance.Cat*PRIstr*highTURNOUT+Distance.Cat*PRDstr*highTURNOUT+Distance.Cat*PANstr*highTURNOUT+     
+                         PRI09a+PRD09a+PAN09a+PART09+
+                         lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+                         EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+                         PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+                         PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+                         CAR+CELULAR+INTERNET+
+                         id_mun, data=table, x=TRUE, y=TRUE)
+
+
+
+benchmarkPART.1.Quantile <- lm( PART ~ Distance.Quant*PRIstr*highTURNOUT+Distance.Quant*PRDstr*highTURNOUT+Distance.Quant*PANstr*highTURNOUT+     
+                          PRI09a+PRD09a+PAN09a+PART09+
+                          lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+                          EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+                          PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+                          PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+                          CAR+CELULAR+INTERNET+
+                          id_mun, data=table, x=TRUE, y=TRUE)
+
+```
+
 ### Table 1
 
 ```{r}
 knitr::kable(broom::tidy(benchmarkPRI.1))
 knitr::kable(broom::tidy(benchmarkPRI.1.proximity))
 knitr::kable(broom::tidy(benchmarkPRI.1.distance))
+knitr::kable(broom::tidy(benchmarkPRI.1.Quantile))
 ```
 
 ```{r}
@@ -381,10 +440,11 @@ ggplot()+
 
 So, the `PRDstr*highTURNOUT` interaction is creating near multicollinearity here.  I removed the `Distance*highTurnout*PRDstr` interaction for now, but will come back and we can try to fix it. Chengyu, if you can figure it out let me know. 
 
+
 ```{r}
 ####Predicted vote shares in PRD Mobilized Strongholds
 
-g <- glm(EPNa ~ Distance.Cat*PRIstr*highTURNOUT+Distance.Cat*PANstr*highTURNOUT+PRDstr+
+g <- glm(EPNa ~ Distance.Cat*PRIstr*highTURNOUT+Distance.Cat*PANstr*highTURNOUT+PRDstr*Distance.Cat*highTURNOUT +
            PRI09a+PRD09a+PAN09a+PART09+
            lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
            EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
@@ -466,16 +526,95 @@ ggplot()+
 
 
 
+###For the Quantiles
 
-The general plots from friday:
 ```{r}
-plot(EPNa ~ distance, data = table)
+####Predicted vote shares in PRD Mobilized Strongholds
 
-plot(EPNa ~ proximity, data = table)
+g <- glm(EPNa ~ Distance.Quant*PRIstr*highTURNOUT+Distance.Quant*PANstr*highTURNOUT+
+           PRI09a+PRD09a+PAN09a+PART09+
+           lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+           EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+           PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+           PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+           CAR+CELULAR+INTERNET+
+           id_mun, data=table, family = 'gaussian')
+
+marg<-marg(mod = g, var_interest = c("Distance.Quant"), type = 'levels', data=table[table$PRDstr==1 & table$highTURNOUT==1,])
+
+#getting confidence intervals for the expected PN turnout in PRD strongholds
+mean <- marg[[1]]$Margin
+upper <- marg[[1]]$'Lower CI (95%)'
+lower <- marg[[1]]$'Upper CI (95%)'
+
+seq <- as.numeric(quantile(table$distance)[-1])
+dataPRI<-data.frame(cbind(seq, mean, upper, lower))
+
+#same for AMLO
+g <- glm(AMLOa ~ Distance.Quant*PRIstr*highTURNOUT+Distance.Quant*PANstr*highTURNOUT+PRDstr+
+           PRI09a+PRD09a+PAN09a+PART09+
+           lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+           EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+           PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+           PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+           CAR+CELULAR+INTERNET+
+           id_mun, data=table, family = 'gaussian')
+
+marg<-marg(mod = g, var_interest = c("Distance.Quant"), type = 'levels', data=table[table$PRDstr==1 & table$highTURNOUT==1,])
+
+mean <- marg[[1]]$Margin
+upper <- marg[[1]]$'Lower CI (95%)'
+lower <- marg[[1]]$'Upper CI (95%)'
+
+
+seq <- as.numeric(quantile(table$distance)[-1])
+dataPRD<-data.frame(cbind(seq, mean, upper, lower))
+
+
+g <- glm(JVMa ~ Distance.Quant*PRIstr*highTURNOUT+PRDstr+Distance.Quant*PANstr*highTURNOUT+     
+           PRI09a+PRD09a+PAN09a+PART09+
+           lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+           EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+           PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+           PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+           CAR+CELULAR+INTERNET+
+           id_mun, data=table, family = 'gaussian')
+
+marg<-marg(mod = g, var_interest = c("Distance.Quant"), type = 'levels', data=table[table$PRDstr==1 & table$highTURNOUT==1,])
+
+mean <- marg[[1]]$Margin
+upper <- marg[[1]]$'Lower CI (95%)'
+lower <- marg[[1]]$'Upper CI (95%)'
+
+
+seq <- as.numeric(quantile(table$distance)[-1])
+dataPAN<-data.frame(cbind(seq, mean, upper, lower))
+
+
+datasim<-data.frame(rbind(dataPRI, dataPRD, dataPAN))
+
+datasim$dv<-NA
+datasim$dv[1:4]<-"Peña Nieto"
+datasim$dv[5:8]<-"López Obrador"
+datasim$dv[9:12]<-"Vázquez Mota"
 ```
 
 
 ```{r}
-plot(EPNa ~ Distance.Cat, xlim = c(0, 40), data = table)
+datasim %>%
+ggplot()+
+  geom_line(aes(x=seq, y=mean,  linetype=dv))+
+ geom_ribbon(aes(x= as.numeric(seq),  ymin= lower,  ymax= upper, fill= dv),  alpha=0.5)+theme_bw()+
+  ylab("Predicted vote shares (%)")+
+  xlab("Distance to Soriana (km)")+xlim(0, 100)+ylim(0,50)+ 
+  scale_fill_manual(values = c("#F0E442","red", "deepskyblue2"), name="")+
+  scale_linetype_manual(values=c("solid", "longdash","dotted"), name="" )+
+  theme(axis.text=element_text(size=18),
+        axis.title=element_text(size=18),
+        legend.text = element_text(size = 18))
 ```
+
+
+
+
 
