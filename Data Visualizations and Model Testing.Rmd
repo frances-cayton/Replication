@@ -404,18 +404,23 @@ datasim$dv<-NA
 datasim$dv[1:351]<-"Pena Nieto" # Chengyu: I have to change the name to Pena
 datasim$dv[352:702]<-"López Obrador"
 datasim$dv[703:1053]<-"Vázquez Mota"
+```
 
+
+```{r}
 ggplot()+
   geom_line(data=datasim, aes(x=distance, y=mean,  linetype=dv))+
   geom_ribbon(data=datasim, aes(x=distance,  ymin=lower, 
                       ymax=upper, fill=dv),  alpha=0.5)+theme_bw()+
   ylab("Predicted vote shares (%)")+
   xlab("Distance to Soriana (km)")+xlim(2.5,20)+ylim(0,50)+ 
+  ggtitle("Original Author Plot - Proximity") +
   scale_fill_manual(values = c("#F0E442","red", "deepskyblue2"), name="")+
   scale_linetype_manual(values=c("solid", "longdash","dotted"), name="" )+
   theme(axis.text=element_text(size=18),
         axis.title=element_text(size=18),
-        legend.text = element_text(size = 18))
+        legend.text = element_text(size = 18),
+        plot.title = element_text(hjust = 0.5))
 ```
 
 ## Distance plot
@@ -488,18 +493,23 @@ datasim$dv<-NA
 datasim$dv[1:201]<-"Pena Nieto"
 datasim$dv[202:402]<-"López Obrador"
 datasim$dv[403:603]<-"Vázquez Mota"
+```
 
+
+```{r}
 ggplot()+
   geom_line(data=datasim, aes(x=at.dist, y=mean,  linetype=dv))+
   geom_ribbon(data=datasim, aes(x=at.dist,  ymin=lower, 
                       ymax=upper, fill=dv),  alpha=0.5)+theme_bw()+
-  ylab("Predicted vote shares (%)")+
+  ylab("Predicted vote shares (%)")+ 
+  ggtitle("Pure Distance") +
   xlab("Distance to Soriana (km)")+xlim(0, 100)+ylim(0,50)+ 
  scale_fill_manual(values = c("#F0E442","red", "deepskyblue2"), name="")+
   scale_linetype_manual(values=c("solid", "longdash","dotted"), name="" )+
   theme(axis.text=element_text(size=18),
         axis.title=element_text(size=18),
-        legend.text = element_text(size = 18))
+        legend.text = element_text(size = 18),
+        plot.title = element_text(hjust = .5))
 ```
 
 
@@ -581,12 +591,14 @@ ggplot()+
   geom_ribbon(data=datasim, aes(x=Distance.Cat,  ymin=lower, 
                       ymax=upper, fill=dv),  alpha=0.5)+theme_bw()+
   ylab("Predicted vote shares (%)")+
+  ggtitle("Coarsened Distance") +
   xlab("Distance to Soriana (km)")+xlim(0, 100)+ylim(0,50)+ 
   scale_fill_manual(values = c("#F0E442","red", "deepskyblue2"), name="")+
   scale_linetype_manual(values=c("solid", "longdash","dotted"), name="" )+
   theme(axis.text=element_text(size=18),
         axis.title=element_text(size=18),
-        legend.text = element_text(size = 18))
+        legend.text = element_text(size = 18),
+        plot.title = element_text(hjust = .5))
 ```
 
 
@@ -672,12 +684,14 @@ ggplot()+
   geom_line(aes(x=seq, y=mean,  linetype=dv))+
  geom_ribbon(aes(x= as.numeric(seq),  ymin= lower,  ymax= upper, fill= dv),  alpha=0.5)+theme_bw()+
   ylab("Predicted vote shares (%)")+
+  ggtitle("Coarsened Quantiles") +
   xlab("Distance to Soriana (km)")+xlim(0, 100)+ylim(0,50)+ 
   scale_fill_manual(values = c("#F0E442","red", "deepskyblue2"), name="")+
   scale_linetype_manual(values=c("solid", "longdash","dotted"), name="" )+
   theme(axis.text=element_text(size=18),
         axis.title=element_text(size=18),
-        legend.text = element_text(size = 18))
+        legend.text = element_text(size = 18),
+        plot.title = element_text(hjust = .5))
 ```
 
 
@@ -760,11 +774,13 @@ ggplot()+
  geom_ribbon(aes(x= as.numeric(seq),  ymin= lower,  ymax= upper, fill= dv),  alpha=0.5)+theme_bw()+
   ylab("Predicted vote shares (%)")+
   xlab("Distance to Soriana (km)")+xlim(0, 100)+ylim(0,50)+ 
+  ggtitle("Coarsened Deciles") +
   scale_fill_manual(values = c("#F0E442","red", "deepskyblue2"), name="")+
   scale_linetype_manual(values=c("solid", "longdash","dotted"), name="" )+
   theme(axis.text=element_text(size=18),
         axis.title=element_text(size=18),
-        legend.text = element_text(size = 18))
+        legend.text = element_text(size = 18),
+        plot.title = element_text(hjust = .5))
 ```
 
 Checking Standard Errors:
