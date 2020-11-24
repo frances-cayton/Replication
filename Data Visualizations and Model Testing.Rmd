@@ -44,6 +44,20 @@ table$Distance.Cat <- as.factor(table$Distance.Cat)
 ```
 
 
+Considering the distribution of distance - it is perhaps better modeled by a log:
+```{r}
+table %>% 
+  ggplot(aes(x = distance)) + geom_histogram()
+
+table %>% 
+  ggplot(aes(x = log(distance))) + geom_histogram()
+
+```
+
+```{r}
+table$log <- log(table$distance)
+```
+
 Re-estimating the model using the coarsened distance and classical standard errors
 
 ```{r}
@@ -52,6 +66,52 @@ table$id_mun<-factor(table$id_mun)
 table$id_dist<-factor(table$id_dist)
 ```
 
+```{r}
+benchmarkPRI.1.log <- lm( EPNa ~ log*PRIstr*highTURNOUT+
+                        log*PRDstr*highTURNOUT+log*PANstr*highTURNOUT+ 
+                         PRI09a+PRD09a+PAN09a+PART09+
+                         lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+                         EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+                         PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+                         PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+                         CAR+CELULAR+INTERNET+
+                         id_mun, data=table, x=TRUE, y=TRUE)
+
+
+#The same model but testing for other parties: 
+
+benchmarkPRD.1.log <- lm( AMLOa ~ log*PRIstr*highTURNOUT+
+                        log*PRDstr*highTURNOUT+log*PANstr*highTURNOUT+     
+                         PRI09a+PRD09a+PAN09a+PART09+
+                         lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+                         EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+                         PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+                         PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+                         CAR+CELULAR+INTERNET+
+                         id_mun, data=table, x=TRUE, y=TRUE)
+
+
+benchmarkPAN.1.log <- lm( JVMa ~ log*PRIstr*highTURNOUT+log*PRDstr*highTURNOUT+log*PANstr*highTURNOUT+     
+                         PRI09a+PRD09a+PAN09a+PART09+
+                         lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+                         EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+                         PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+                         PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+                         CAR+CELULAR+INTERNET+
+                         id_mun, data=table, x=TRUE, y=TRUE)
+
+
+
+benchmarkPART.1.log <- lm( PART ~ log*PRIstr*highTURNOUT+log*PRDstr*highTURNOUT+log*PANstr*highTURNOUT+     
+                          PRI09a+PRD09a+PAN09a+PART09+
+                          lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+                          EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+                          PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+                          PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+                          CAR+CELULAR+INTERNET+
+                          id_mun, data=table, x=TRUE, y=TRUE)
+
+```
 
 ```{r}
 benchmarkPRI.1 <- lm( EPNa ~ Distance.Cat*PRIstr*highTURNOUT+
@@ -330,6 +390,7 @@ knitr::kable(broom::tidy(benchmarkPRI.1.proximity))
 knitr::kable(broom::tidy(benchmarkPRI.1.distance))
 knitr::kable(broom::tidy(benchmarkPRI.1.Quantile))
 knitr::kable(broom::tidy(benchmarkPRI.1.Decile))
+knitr::kable(broom::tidy(benchmarkPRI.1.log))
 ```
 
 ```{r}
@@ -433,6 +494,102 @@ originalprox <- ggplot()+
         plot.title = element_text(hjust = 0.5))
 
 ggsave("originalprox.jpg")
+```
+
+
+##Log Distance plot
+```{r}
+g <- glm(EPNa ~ log*PRIstr*highTURNOUT+log*PRDstr*highTURNOUT+log*PANstr*highTURNOUT+     
+           PRI09a+PRD09a+PAN09a+PART09+
+           lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+           EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+           PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+           PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+           CAR+CELULAR+INTERNET+
+           id_mun, data=table, family = 'gaussian')
+
+at.logdist <- seq(-4.5, 4.6, .01)
+marg<-marg(mod = g, var_interest = c("log"), type = 'levels', data=table[table$PRDstr==1 & table$highTURNOUT==1,],
+           at_var_interest = seq(-4.5, 4.6, .01),  cofint=.95)
+
+#getting confidence intervals for the expected PN turnout in PRD strongholds
+mean <- marg[[1]]$Margin
+upper <- marg[[1]]$'Lower CI (95%)'
+lower <- marg[[1]]$'Upper CI (95%)'
+
+dataPRI<-data.frame(cbind(at.logdist, mean, upper, lower))
+dataPRI$distance<-exp(dataPRI$at.logdist)
+
+
+#same for AMLO
+g <- glm(AMLOa ~ log*PRIstr*highTURNOUT+log*PRDstr*highTURNOUT+log*PANstr*highTURNOUT+     
+           PRI09a+PRD09a+PAN09a+PART09+
+           lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+           EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+           PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+           PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+           CAR+CELULAR+INTERNET+
+           id_mun, data=table, family = 'gaussian')
+
+at.logdist <- seq(-4.5, 4.6, .01)
+marg<-marg(mod = g, var_interest = c("log"), type = 'levels', data=table[table$PRDstr==1 & table$highTURNOUT==1,],
+           at_var_interest = seq(-4.5, 4.6, .01),  cofint=.95)
+
+mean <- marg[[1]]$Margin
+upper <- marg[[1]]$'Lower CI (95%)'
+lower <- marg[[1]]$'Upper CI (95%)'
+
+dataPRD<-data.frame(cbind(at.logdist, mean, upper, lower))
+dataPRD$distance<-exp(dataPRI$at.logdist)
+
+g <- glm(JVMa ~ log*PRIstr*highTURNOUT+log*PRDstr*highTURNOUT+log*PANstr*highTURNOUT+     
+           PRI09a+PRD09a+PAN09a+PART09+
+           lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+           EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+           PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+           PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+           CAR+CELULAR+INTERNET+
+           id_mun, data=table, family = 'gaussian')
+
+at.logdist <- seq(-4.5, 4.6, .01)
+marg<-marg(mod = g, var_interest = c("log"), type = 'levels', data=table[table$PRDstr==1 & table$highTURNOUT==1,],
+           at_var_interest = seq(-4.5, 4.6, .01),  cofint=.95)
+
+mean <- marg[[1]]$Margin
+upper <- marg[[1]]$'Lower CI (95%)'
+lower <- marg[[1]]$'Upper CI (95%)'
+
+dataPAN<-data.frame(cbind(at.logdist, mean, upper, lower))
+dataPAN$distance<-exp(dataPRI$at.logdist)
+
+
+datasim<-data.frame(rbind(dataPRI, dataPRD, dataPAN))
+```
+
+
+```{r}
+datasim$dv<-NA
+datasim$dv[1:911]<-"Pena Nieto" # Chengyu: I have to change the name to Pena
+datasim$dv[912:1822]<-"López Obrador"
+datasim$dv[1823:2733]<-"Vázquez Mota"
+```
+
+
+```{r}
+ggplot()+
+  geom_line(data=datasim, aes(x=distance, y=mean,  linetype=dv))+
+  geom_ribbon(data=datasim, aes(x=distance,  ymin=lower, 
+                      ymax=upper, fill=dv),  alpha=0.5)+theme_bw()+
+  ylab("Predicted vote shares (%)") +
+  xlab("Distance to Soriana (km)")+xlim(0,20)+ylim(0,50)+ 
+  ggtitle("Log Distance") +
+  scale_fill_manual(values = c("#F0E442","red", "deepskyblue2"), name="")+
+  scale_linetype_manual(values=c("solid", "longdash","dotted"), name="" )+
+  theme(axis.text=element_text(size= 12),
+        axis.title=element_text(size= 12),
+        legend.text = element_text(size = 12),
+        plot.title = element_text(hjust = 0.5))
+
 ```
 
 ## Distance plot
@@ -828,11 +985,11 @@ ggsave("deciles.jpg")
 Checking Standard Errors:
 ```{r}
 library(sandwich)
-tail(coeftest(benchmarkPRI.1, vcov = vcovHC(benchmarkPRI.1,type="HC1")))
-tail(coeftest(benchmarkPRI.1))
+head(coeftest(benchmarkPRI.1, vcov = vcovHC(benchmarkPRI.1,type="HC1")))
+head(coeftest(benchmarkPRI.1))
 
-tail(coeftest(benchmarkPRI.1.proximity, vcov = vcovHC(benchmarkPRI.1.proximity,type="HC1")))
-tail(coeftest(benchmarkPRI.1.proximity))
+head(coeftest(benchmarkPRI.1.proximity, vcov = vcovHC(benchmarkPRI.1.proximity,type="HC1")))
+head(coeftest(benchmarkPRI.1.proximity))
 
 head(coeftest(benchmarkPRI.1.distance, vcov = vcovHC(benchmarkPRI.1.distance,type="HC1")))
 head(coeftest(benchmarkPRI.1.distance))
@@ -843,6 +1000,16 @@ head(coeftest(benchmarkPRI.1.Quantile))
 
 head(coeftest(benchmarkPRI.1.Decile, vcov = vcovHC(benchmarkPRI.1.Decile,type="HC1")))
 head(coeftest(benchmarkPRI.1.Decile))
+```
+
+
+```{r}
+coeftest(benchmarkPRI.1.proximity, vcov = vcovHC(benchmarkPRI.1.proximity,type="HC1"))
+coeftest(benchmarkPRI.1.proximity)
+
+coeftest(benchmarkPRI.1.log, vcov = vcovHC(benchmarkPRI.1.log,type="HC1"))
+coeftest(benchmarkPRI.1.log)
+
 ```
 
 ```{r}
