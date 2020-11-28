@@ -705,15 +705,19 @@ upperCSE <- coefficient + (1.96*CSE)
 lowerCSE <- coefficient - (1.96*CSE)
 
 
+
+
 df <- as.data.frame(cbind(model, RSE, CSE, coefficient, upperRSE, lowerRSE, upperCSE, lowerCSE))
+df$RSE <- as.numeric(df$RSE)
+df$CSE <- as.numeric(df$CSE)
+df$coefficient <- as.numeric(df$coefficient)
+df$upperRSE <- as.numeric(df$upperRSE)
+df$lowerRSE <- as.numeric(df$lowerRSE)
+df$upperCSE <- as.numeric(df$upperCSE)
+df$lowerCSE <- as.numeric(df$lowerCSE)
+
 df <- pivot_longer(df, cols = 2:3)
 df$sampleNum <- 1:8
-```
-
-
-
-```{r}
-labels <- seq(-1, 30, length.out=10)
 ```
 
 
@@ -722,14 +726,16 @@ df %>%
   ggplot(aes(x = coefficient, y = model)) +
   geom_point(aes(x = coefficient)) +
   geom_errorbarh(aes(xmin=lowerRSE,xmax=upperRSE, color = "red")) + 
-  geom_errorbarh(aes(xmin=lowerCSE,xmax=upperCSE, color= "blue")) + 
-  scale_color_discrete(name = "Legend", labels = c("Robust", "Classical")) +
- xlab("Coefficient") + theme(axis.text.x = element_text(angle = 90)) +
+  geom_errorbarh(aes(xmin=lowerCSE,xmax=upperCSE, color = "blue")) + 
+  scale_color_discrete(name = "Legend", labels = c("Classical", "Robust")) +
+ xlab("Coefficient") +
   ggtitle("High Proximity*Distance Measure*PRD Stronghold Estimates") +
-  ylab("Model") 
+  ylab("Model") +
+  labs(caption = "Using smallest quantile & decile coefficient for which there were estimates, given multicollinearity problem.") -> se.plot
     
+se.plot
 
-
+ggsave("se.plot.jpg", height = 5, width = 7)
 ```
 
 
