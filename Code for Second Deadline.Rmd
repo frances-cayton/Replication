@@ -1,12 +1,33 @@
 ---
 title: "Replication Code for Second Deadline"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
-```{r}
-rm(list=ls(all=TRUE))
+\begin{center}
+Authors: Chengyu Fu, Molly Hickey, and Frances Cayton
+\end{center}
+
+
+We have replicated Tables 1-3 and Figures 1-3 from our original paper "Groceries for Votes: The Electoral Returns of Vote Buying," $\textit{The Journal of Politics}$, 81(3), 790-804. The original paper can be found [here](http://dx.doi.org/10.1086/702945). The code and data for this replication can be found and downloaded from our group's Github repo [here](https://github.com/frances-cayton/Replication). If you run into any trouble accessing the repo, do not hesitate to let us know.
+
+This report includes all of the main findings from the paper, though excludes one more tangential simulation completed in the paper. At this time we have 4 possible routes for extension that we plan to do; these replications here provide the groundwork for each route. Below we have listed each extension path and which tables/figures in our replication code these will build on. 
+
+These options include: 
+
+1. Re-running the regressions through simulation, and seeing if the results hold (Table 1-2, Figure 2-3). 
+
+2.  The author uses robust standard errors, but does not discuss whether these match regular standard errors. We have checked this, and note that the robust standard errors in many instances are far larger (at least 2x the size) than the classical SEs. See the beginnings of this portion of our analysis at the end of the section for Table 1 (Tables 1-2, Figures 2-3). 
+
+3. The author matches electoral precinct data with census precinct data. Per [King, Imai, Rivera (2020)](https://gking.harvard.edu/files/gking/files/170507.email_.pdf), in these precincts are different geographic entities reported by different government offices. To get around this problem, these authors develop a ["precinct cluster,"](https://gking.harvard.edu/files/gking/files/progpol-supp.pdf). We will test to see if the results hold using the accurate precinct (Tables 1-2, Figures 2-3).
+
+4.  The author uses the measure of `proximity` to a Soriana store as an instrument to capture how much one may value the giftcard given. Preliminary tests suggest that the relationship does not hold if one is to use `distance` instance of `proximity` (Figures 1-3, Tables 1-3). We have begun this portion of the analysis (see under the section for Figure 1). `Proximity` here is measured as $\frac{1}{\text{distance}}$.
+
+
+
+```{r, results = 'hide', message = FALSE}
 library(foreign)
-library(ggplot2)
 library(stargazer)
 library(arm)
 library(rms)
@@ -23,7 +44,13 @@ library(stats)
 library(haven)
 library(systemfit)
 library(nnet)
+library(sjmisc)
+library(maptools)
+library(rgeos)
+library(Imap)
+library(spatstat)
 ```
+
 
 
 ```{r}
@@ -50,7 +77,8 @@ base_3$sec <- base_3$P15
 
 base_3[base_3$sec==0,]$sec <- 0.6
 
-#30b.- (SI DICE SÍ) ¿A cuántos grupos u organizaciones de ese tipo pertenece usted? (ANOTAR EL NUMERO DIRECTO; 0=NINGUNO; 99=NS/NC)
+#30b.- (SI DICE SÍ) ¿A cuántos grupos u organizaciones
+#de ese tipo pertenece usted? (ANOTAR EL NUMERO DIRECTO; 0=NINGUNO; 99=NS/NC)
 base_3$belongparty <- base_3$'P30_4'
 base_3$belongunion <- base_3$'P30_5'
 base_3$belongreligiousgroup <- base_3$'P30_7'
@@ -63,7 +91,8 @@ base_3[base_3$belongparty %in% 2,]$belongparty <- 0
 base_3[base_3$belongunion %in% 2,]$belongunion <- 0
 base_3[base_3$belongreligiousgroup %in% 2,]$belongreligiousgroup <- 0
 
-#44.- (TARJETA 11) En una escala del 1 al 10, donde 1 significa “nada” y 10 “mucho”. ¿A usted...? (LEER) (0=NS/NC)
+#44.- (TARJETA 11) En una escala del 1 al 10, 
+#donde 1 significa “nada” y 10 “mucho”. ¿A usted...? (LEER) (0=NS/NC)
 #a. Cuánto le interesa la política
 base_3$interestpolitics <- base_3$P44_1
 #c. Cuánto participa usted en las elecciones
@@ -73,7 +102,8 @@ base_3$discusspolitics <- base_3$P44_5
 #d. Cuánto sigue las noticias sobre política y gobierno
 base_3$follownews <- base_3$P44_4
 
-#54.- En general, ¿usted aprueba o desaprueba la forma como está haciendo su trabajo...? (1= Aprueba; 2=Desaprueba; 0=NS/NC)
+#54.- En general, ¿usted aprueba o desaprueba la forma como está haciendo su trabajo...? 
+#(1= Aprueba; 2=Desaprueba; 0=NS/NC)
 base_3$presidentialapp <- base_3$P54_1
 base_3$govapp <- base_3$P54_2
 base_3$congressapp <- base_3$P54_4
@@ -86,15 +116,23 @@ base_3[base_3$presidentialapp %in% 2,]$presidentialapp <- 0
 base_3[base_3$govapp %in% 2,]$govapp <- 0
 base_3[base_3$congressapp %in% 2,]$congressapp <- 0
 
-#87.- Generalmente, ¿usted se considera priísta, panista o perredista? (INSISTIR) ¿Muy (PRIISTA / PANISTA / PERREDISTA) o algo (PRIISTA / PANISTA /PERREDISTA)? (NS/NC=0)
+#87.- Generalmente, ¿usted se considera priísta, panista o perredista? (INSISTIR) 
+#¿Muy (PRIISTA / PANISTA / PERREDISTA) o algo (PRIISTA / PANISTA /PERREDISTA)? (NS/NC=0)
 base_3$partyid <- base_3$P87
 base_3$pri <- ifelse(base_3$partyid == 1 | base_3$partyid == 2, 1, 0)
 base_3$pan <- ifelse(base_3$partyid == 3 | base_3$partyid == 4, 1, 0)
 base_3$prd <- ifelse(base_3$partyid == 5 | base_3$partyid == 6, 1, 0)
 
-base_3$partyid <- ifelse(base_3$P87 == 1 | base_3$P87 == 2, 1, ifelse(base_3$P87 == 3 | base_3$P87 == 4, 2, ifelse(base_3$P87 == 5 | base_3$P87 == 6, 3, 0)))
+base_3$partyid <- ifelse(base_3$P87 == 1 | base_3$P87 == 2, 1,
+                         ifelse(base_3$P87 == 3 | base_3$P87 == 4, 2, 
+                        ifelse(base_3$P87 == 5 | base_3$P87 == 6, 3, 0)))
 
-base_3$education <-  ifelse(base_3$P104 == 1, 0, ifelse(base_3$P104 == 2, 1, ifelse(base_3$P104 == 3, 2, ifelse(base_3$P104 == 4 | base_3$P104 == 5, 3, ifelse(base_3$P104 == 6 | base_3$P104 == 7, 4, ifelse(base_3$P104 == 8, 5, ifelse(base_3$P104 == 9, 6, NA)))))))
+base_3$education <-  ifelse(base_3$P104 == 1, 0, 
+                            ifelse(base_3$P104 == 2, 1, 
+                           ifelse(base_3$P104 == 3, 2, 
+                                ifelse(base_3$P104 == 4 | base_3$P104 == 5, 3,
+                                ifelse(base_3$P104 == 6 | base_3$P104 == 7, 4, 
+                        ifelse(base_3$P104 == 8, 5, ifelse(base_3$P104 == 9, 6, NA)))))))
 
 base_3$cellphone <-  ifelse(base_3$P112_2 == 3, NA, base_3$P112_2)
 
@@ -108,24 +146,27 @@ base_3$munID <- as.numeric(paste(base_3$estado, base_3$municipio, sep = ""))
 ```
 
 ```{r model_figure_1}
-
 # I use multinom from nnet here
 # Is constant term needed?
-m1_3_multinom <- multinom(partyid ~ prox+edad+gender+education+sec+cellphone+internet+localidae, data = base_3)
+m1_3_multinom <- multinom(partyid ~ 
+          prox+edad+gender+education+sec+cellphone+internet+localidae, data = base_3)
 
 summary(m1_3_multinom)
 
-formula_presi <- presidentialapp ~ prox+edad+gender+education+sec+cellphone+internet+localidae
+formula_presi <- presidentialapp ~ 
+  prox+edad+gender+education+sec+cellphone+internet+localidae
 m4_presi <- glm(formula_presi, data = base_3, family = "binomial")
 
 summary(m4_presi)
 
-formula_gov <- govapp ~ prox+edad+gender+education+sec+cellphone+internet+localidae
+formula_gov <- govapp ~ 
+  prox+edad+gender+education+sec+cellphone+internet+localidae
 m5_gov <- glm(formula_gov, data = base_3, family = "binomial")
 
 summary(m5_gov)
 
-formula_congress <- congressapp ~ prox+edad+gender+education+sec+cellphone+internet+localidae
+formula_congress <- congressapp ~ 
+  prox+edad+gender+education+sec+cellphone+internet+localidae
 m6_congress <- glm(formula_congress, data = base_3, family = "binomial")
 
 summary(m6_congress)
@@ -133,21 +174,26 @@ summary(m6_congress)
 # Seemingly Unrelated Regression by systemfit
 # which result to trust, single regress or SUR?
 
-sur_part1 <- systemfit(list(presi = formula_presi, gov = formula_gov, congress = formula_congress), method = "SUR", data = base_3)
+sur_part1 <- systemfit(list(presi = 
+                              formula_presi, gov = formula_gov, 
+                            congress = formula_congress), method = "SUR", data = base_3)
 
 summary(sur_part1)
 
-formula_party <- belongparty ~ prox+edad+gender+education+sec+cellphone+internet+localidae
+formula_party <- belongparty ~ 
+  prox+edad+gender+education+sec+cellphone+internet+localidae
 m7_party <- glm(formula_party, data = base_3, family = "binomial")
 
 summary(m7_party)
 
-formula_union <- belongunion ~ prox+edad+gender+education+sec+cellphone+internet+localidae
+formula_union <- belongunion ~ 
+  prox+edad+gender+education+sec+cellphone+internet+localidae
 m8_union <- glm(formula_union, data = base_3, family = "binomial")
 
 summary(m8_union)
 
-formula_reli <- belongreligiousgroup ~ prox+edad+gender+education+sec+cellphone+internet+localidae
+formula_reli <- belongreligiousgroup ~ 
+  prox+edad+gender+education+sec+cellphone+internet+localidae
 m9_reli <- glm(formula_reli, data = base_3, family = "binomial")
 
 summary(m9_reli)
@@ -155,28 +201,34 @@ summary(m9_reli)
 # Seemingly Unrelated Regression by systemfit
 # which result to trust, single regress or SUR?
 
-sur_part2 <- systemfit(list(party = formula_party, union = formula_union, reli = formula_reli), data = base_3)
+sur_part2 <- systemfit(list(party = 
+            formula_party, union = formula_union, reli = formula_reli), data = base_3)
 
 summary(sur_part2)
 
 # The last four formula are purely estimated by SUR
 # Maybe replicate by regressing all formula separately?
 
-formula_interestpoli <- interestpolitics ~ prox+edad+gender+education+sec+cellphone+internet+localidae
+formula_interestpoli <- interestpolitics ~ 
+  prox+edad+gender+education+sec+cellphone+internet+localidae
 
 formula_interestelec <- interestelections ~ prox+edad+gender+education+sec+cellphone+internet+localidae
 
-formula_discuss <- discusspolitics ~ prox+edad+gender+education+sec+cellphone+internet+localidae
+formula_discuss <- discusspolitics ~
+  prox+edad+gender+education+sec+cellphone+internet+localidae
 
-formula_follow <- follownews ~ prox+edad+gender+education+sec+cellphone+internet+localidae
+formula_follow <- follownews ~ 
+  prox+edad+gender+education+sec+cellphone+internet+localidae
 
-sur_part3 <- systemfit(list(interestpoli = formula_interestpoli, interestelec = formula_interestelec, discuss = formula_discuss, follow = formula_follow), data = base_3)
+sur_part3 <- systemfit(list(interestpoli = 
+              formula_interestpoli, interestelec = formula_interestelec, 
+              discuss = formula_discuss, follow = formula_follow), data = base_3)
 
 summary(sur_part3)
 
 ```
 
-I rewrite the Stata code to R here, and compare the results in R, Stata, and in the paper. 
+I rewrote the Stata code to R here, and compared the results in R, Stata, and in the paper. 
 
 First, for the binomial and multinomial models (i.e., models starting with "m"), the R and Stata replication results are generally the same.
 
@@ -189,6 +241,7 @@ Fourth, the Seemingly Unrelated Regression (SUR) results are quite different in 
 ```{r graph_figure_1}
 
 results <- read.table(header=T, con <- textConnection('
+
 IV	Coefficient	StdError Coef_repli SE_repli	Model	Included	Variable Order
 Proximity	-0.052	0.100	-0.055 0.101 1	1	PRI 13
 Proximity  0.013	0.127	0.019 0.127 1	1	PAN 12
@@ -231,11 +284,11 @@ a<-ggplot(results, aes(y=reorder(Variable, Order), x = Coefficient)) +
   labs( x = "Coefficients", y = "Variable") +
   theme_bw()+
   theme(
-    axis.title.x = element_text(face="bold", size=18),
-    axis.title.y = element_text(face="bold", size=18, angle=90),
-    axis.text.x  = element_text( size=16),
-    strip.text.x = element_text(size=16),
-    axis.text.y  = element_text( size=18))
+    axis.title.x = element_text(face="bold", size=12),
+    axis.title.y = element_text(face="bold", size=12, angle=90),
+    axis.text.x  = element_text( size=12),
+    strip.text.x = element_text(size=12),
+    axis.text.y  = element_text( size=12))
 
 a
 
@@ -249,22 +302,156 @@ b<-ggplot(results, aes(y=reorder(Variable, Order), x = Coef_repli)) +
   labs( x = "Coefficients", y = "Variable") +
   theme_bw()+
   theme(
+    axis.title.x = element_text(face="bold", size=1),
+    axis.title.y = element_text(face="bold", size=12, angle=90),
+    axis.text.x  = element_text( size=12),
+    strip.text.x = element_text(size=12),
+    axis.text.y  = element_text( size=12))
+
+b
+
+```
+<<<<<<< HEAD
+=======
+
+Below is another replication (replacing proximity with distance) of Figure 1, testing the assumption that distance to the supermarket does not correlate with political attitudes and political behaviors.
+
+```{r repli_model_figure_1}
+
+rep_m1_3_multinom <- multinom(partyid ~ distance+edad+gender+education+sec+cellphone+internet+localidae, data = base_3)
+
+summary(rep_m1_3_multinom)
+
+rep_formula_presi <- presidentialapp ~ 
+  distance+edad+gender+education+sec+cellphone+internet+localidae
+rep_m4_presi <- glm(rep_formula_presi, data = base_3, family = "binomial")
+
+summary(rep_m4_presi)
+
+rep_formula_gov <- govapp ~ 
+  distance+edad+gender+education+sec+cellphone+internet+localidae
+rep_m5_gov <- glm(rep_formula_gov, data = base_3, family = "binomial")
+
+summary(rep_m5_gov)
+
+rep_formula_congress <- congressapp ~ 
+  distance+edad+gender+education+sec+cellphone+internet+localidae
+rep_m6_congress <- glm(rep_formula_congress, data = base_3, family = "binomial")
+
+summary(rep_m6_congress)
+
+# Seemingly Unrelated Regression by systemfit
+# which result to trust, single regress or SUR?
+
+rep_sur_part1 <- systemfit(list(presi = 
+                rep_formula_presi, gov = rep_formula_gov, congress = rep_formula_congress),
+                method = "SUR", data = base_3)
+
+summary(rep_sur_part1)
+
+rep_formula_party <- belongparty ~ 
+  distance+edad+gender+education+sec+cellphone+internet+localidae
+rep_m7_party <- glm(rep_formula_party, data = base_3, family = "binomial")
+
+summary(rep_m7_party)
+
+rep_formula_union <- belongunion ~ distance+edad+gender+
+  education+sec+cellphone+internet+localidae
+rep_m8_union <- glm(rep_formula_union, data = base_3, family = "binomial")
+
+summary(rep_m8_union)
+
+rep_formula_reli <- belongreligiousgroup ~
+  distance+edad+gender+education+sec+cellphone+internet+localidae
+rep_m9_reli <- glm(rep_formula_reli, data = base_3, family = "binomial")
+
+summary(rep_m9_reli)
+
+# Seemingly Unrelated Regression by systemfit
+# which result to trust, single regress or SUR?
+
+rep_sur_part2 <- systemfit(list(party = rep_formula_party, 
+                union = rep_formula_union, reli = rep_formula_reli), data = base_3)
+
+summary(rep_sur_part2)
+
+# The last four formula are purely estimated by SUR
+# Maybe replicate by regressing all formula separately?
+
+rep_formula_interestpoli <- interestpolitics ~
+  distance+edad+gender+education+sec+cellphone+internet+localidae
+
+rep_formula_interestelec <- interestelections ~
+  distance+edad+gender+education+sec+cellphone+internet+localidae
+
+rep_formula_discuss <- discusspolitics ~
+  distance+edad+gender+education+sec+cellphone+internet+localidae
+
+rep_formula_follow <- follownews ~ 
+  distance+edad+gender+education+sec+cellphone+internet+localidae
+
+rep_sur_part3 <- systemfit(list(interestpoli = rep_formula_interestpoli, 
+                        interestelec = rep_formula_interestelec, discuss =
+                        rep_formula_discuss, follow = rep_formula_follow), data = base_3)
+
+summary(rep_sur_part3)
+
+results <- read.table(header=T, con <- textConnection('
+IV	Coefficient	StdError	Model	Included	Variable Order
+Distance	0.0153	0.0112	1	1	PRI 13
+Distance  -0.0266	0.0281 1	1	PAN 12
+Distance  0.0042  0.0180	1	1	PRD 11
+Distance  0.0040	0.0023	2	1	"President\'s Approval" 10
+Distance  0.0043	0.0023	2	1	"Governor\'s Approval" 9
+Distance  -0.0005  0.0023	2	1	"Congress\'s Approval" 8
+Distance  -0.0001  0.0006	3	1	"Party Member" 7
+Distance  -0.0004	0.0006 3	1	"Union Member" 6
+Distance  0.0007  0.0010 3	1	"Religious group member" 5
+Distance  -0.0260  0.0114 4	1	"Interest in politics" 4
+Distance  0.0179	0.0107	4	1	"Interest in elections" 3
+Distance  -0.0364 0.0108	4	1	"Talks about politcs" 2
+Distance  -0.0106  0.0113 4	1	"Follows news" 1
+'))
+close(con)
+
+results$min<-results$Coefficient-(1.96*results$StdError)
+results$max<-results$Coefficient+(1.96*results$StdError)
+results$Color[results$Included==1]<-"black"
+results$Color[results$Included==0]<-"white"
+
+results$Model[results$Model==1]<-"1. Party ID"
+results$Model[results$Model==2]<-"2. Approval"
+results$Model[results$Model==3]<-"3. Membership"
+results$Model[results$Model==4]<-"4. Political Awareness"
+
+results$Variable <- factor(results$Variable, levels=results$Variable[order(results$Order)])
+
+# c is the figure 1 with replicated data (distance rather than proximity)
+c<-ggplot(results, aes(y=reorder(Variable, Order), x = Coefficient)) +
+#  scale_colour_gradient(low="white", high="black")+
+  geom_point(size=3) +
+  facet_grid( ~ Model)+
+  geom_errorbarh(aes(xmin=min, xmax=max),  height = 0) +
+  geom_vline(xintercept = 0, linetype=2, color="red") +
+  labs( x = "Coefficients", y = "Variable") +
+  theme_bw()+
+  theme(
     axis.title.x = element_text(face="bold", size=18),
     axis.title.y = element_text(face="bold", size=18, angle=90),
     axis.text.x  = element_text( size=16),
     strip.text.x = element_text(size=16),
     axis.text.y  = element_text( size=18))
 
-b
+c
 
 ```
-# Replication of Table 1 (Frances)
 
-I've mostly annotated and re-run the pre-existing code. I plan to go *back* through and re-do as simulations similar to how we were shown in section.
+Thus, we can see that the distance to Soriana may be endogenous to other political attitudes and behavior. Results show that a higher distance to the supermarket may correlate with lower interest in politics and lower frequency of talking politics. In other words, distance to Soriana may capture not the expected value of coupons but the varying political values and behaviors. This poses a challenge to the assumption that distance (or proximity) only impacts the expected value of gift cards.
+
+# Replication of Table 1 (Frances)
 
 ```{r}
 data <- table
-head(table)
 
 #this is a function to round to the hundreds place of a decimal
 specify_decimal <- function(x, k) {format(round(x, k), nsmall = k)}
@@ -276,17 +463,11 @@ These are models creating benchmark OLS estimates for proximity to Soriana store
 ```{r}
 #regressing different parties on proximity to soriana store 
 robustness1 <- ols(proximity ~ PRI06 +PRD06+PAN06+PART06, data= data, x= TRUE, y= TRUE)
-```
 
-
-```{r}
 #this is the same as the first but incorporating the municipal districts. 
 robustness2 <- ols( proximity ~ PRI06+PRD06+PAN06+PART06+
                       id_mun, data=data, x=TRUE, y=TRUE)
-```
 
-
-```{r}
 #this is the larger model
 robustness3 <- ols( proximity ~ PRI06+PRD06+PAN06+PART06+
                       lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
@@ -295,10 +476,7 @@ robustness3 <- ols( proximity ~ PRI06+PRD06+PAN06+PART06+
                       PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
                       CAR+CELULAR+INTERNET+
                      id_mun, data=data, x=TRUE, y=TRUE)
-```
 
-
-```{r}
 robustness4 <- ols( proximity ~ 
                       lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
                       EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
@@ -309,10 +487,17 @@ robustness4 <- ols( proximity ~
 ```
 
 
+<<<<<<< HEAD
 This creates a table of covariates
 #Molly: I'm getting this error for the below: Error in h(simpleError(msg, call)) : error in evaluating the argument 'x' in selecting a method for function 'mean': $ operator is invalid for atomic vectors
 ```{r}
 stargazer(robustness1, robustness2, robustness3, robustness4, star.cutoffs = c(0.05, 0.01, 0.001), style = "qje", digits=3,
+=======
+A table from the appendix essentially showing that this pattern was not present in the 2006 election (in which vote buying did not occur). This is not central to our results, but is part of the code. As such, I will not have the full table populate (because it takes up a lot of space), but will include this code chunk here and in the .Rmd for anyone to check through.
+
+```{r, eval = FALSE}
+stargazer(robustness1, robustness2, robustness3, robustness4, star.cutoffs = c(0.05, 0.01, 0.001), style = "qje", digits=3, type = "text", 
+>>>>>>> 6a9fcbaf6e458cd95142cff483218080bd41dbeb
           covariate.labels = c("PRI 2006", "PRD2006", "PAN2006", "Turnout 2006","Population Log", "Population over 18 ",
                                "Population over 65", "Area", "Density", "Indigenous","Catholic","Nonreligious","Education","College degree","Illiteracy","Inhabitants per house","Population in the labor market",
                                "Female population in the labor market", "No insurance","Female head of household","Inhabitants per room", "Dirt floor", "All services", "No services", "Car", "Mobile phone", "Internet", "ACULCO" , "ALMOLOYA DE JUAREZ " , 
@@ -327,8 +512,9 @@ stargazer(robustness1, robustness2, robustness3, robustness4, star.cutoffs = c(0
                                "IZTAPALAPA" , "MAGDALENA CONTRERAS" , "MIGUEL HIDALGO" , "MILPA ALTA" , "TLAHUAC" , "TLALPAN" , "VENUSTIANO CARRANZA" , "XOCHIMILCO"))
 ```
 
-This creates the Benchmark Model table from page 24 of the appendix. 
-This is the basis of Table 1. 
+This creates the central model, which is at the basis of Table 1. It has not been re-done using distance instead of proximity yet (per extension idea #4 listed at the outset of our discussion). 
+
+This model is abbreviated in the text of the paper (they use a check box saying each of these controls and dummies were used, but all are printed here). The full model is in the appendix.
 ```{r}
 #reclassifying municipality and district as factor variables
 data$id_mun<-factor(data$id_mun)
@@ -342,7 +528,8 @@ slopesBM<-matrix(NA,3,4)
 seBM<-matrix(NA,3,4)
 
 
-benchmarkPRI.1 <- lm( EPNa ~ proximity*PRIstr*highTURNOUT+proximity*PRDstr*highTURNOUT+proximity*PANstr*highTURNOUT+     
+benchmarkPRI.1 <- lm( EPNa ~ proximity*PRIstr*highTURNOUT+
+                        proximity*PRDstr*highTURNOUT+proximity*PANstr*highTURNOUT+ 
                          PRI09a+PRD09a+PAN09a+PART09+
                          lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
                          EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
@@ -352,7 +539,8 @@ benchmarkPRI.1 <- lm( EPNa ~ proximity*PRIstr*highTURNOUT+proximity*PRDstr*highT
                          id_mun, data=data, x=TRUE, y=TRUE)
 ```
 
-This function "returns a multi-way cluster-robust variance-covariance matrix" -- I think this bit right here is related to what Gary was saying on the type of errors and that they can cover up problems with the model. I don't fully understand this right now, but perhaps after we get a little further in the semester. 
+
+This function returns a multi-way cluster-robust variance-covariance matrix for the benchmark model:  
 ```{r}
 covBMpri <- cluster.vcov(benchmarkPRI.1, data$id_dist)
 
@@ -374,7 +562,7 @@ g_pan <- function(b){
   return( b[2] + b[140] + b[144] + b[148] )
 }
 
-#again, not very sure what this jacobian function is doing
+
 grad_g_pri <-  jacobian(g_pri, benchmarkPRI.1$coef)
 grad_g_prd <-  jacobian(g_prd, benchmarkPRI.1$coef)
 grad_g_pan <-  jacobian(g_pan, benchmarkPRI.1$coef)
@@ -382,11 +570,20 @@ grad_g_pan <-  jacobian(g_pan, benchmarkPRI.1$coef)
 
 Taking the slopes and standard errors:
 ```{r}
-slopesBM[1,1] <- benchmarkPRI.1$coefficients[c("proximity")] + benchmarkPRI.1$coefficients[c("proximity:highTURNOUT")] + benchmarkPRI.1$coefficients[c("proximity:PRIstr")]+  benchmarkPRI.1$coefficients[c("proximity:PRIstr:highTURNOUT")]
+slopesBM[1,1] <- benchmarkPRI.1$coefficients[c("proximity")] +
+  benchmarkPRI.1$coefficients[c("proximity:highTURNOUT")] +
+  benchmarkPRI.1$coefficients[c("proximity:PRIstr")]+ 
+  benchmarkPRI.1$coefficients[c("proximity:PRIstr:highTURNOUT")]
 
-slopesBM[2,1] <- benchmarkPRI.1$coefficients[c("proximity")] + benchmarkPRI.1$coefficients[c("proximity:highTURNOUT")] + benchmarkPRI.1$coefficients[c("proximity:PRDstr")]+  benchmarkPRI.1$coefficients[c("proximity:highTURNOUT:PRDstr")]
+slopesBM[2,1] <- benchmarkPRI.1$coefficients[c("proximity")] +
+  benchmarkPRI.1$coefficients[c("proximity:highTURNOUT")] +
+  benchmarkPRI.1$coefficients[c("proximity:PRDstr")]+ 
+  benchmarkPRI.1$coefficients[c("proximity:highTURNOUT:PRDstr")]
 
-slopesBM[3,1] <- benchmarkPRI.1$coefficients[c("proximity")] + benchmarkPRI.1$coefficients[c("proximity:highTURNOUT")] + benchmarkPRI.1$coefficients[c("proximity:PANstr")]+  benchmarkPRI.1$coefficients[c("proximity:highTURNOUT:PANstr")]
+slopesBM[3,1] <- benchmarkPRI.1$coefficients[c("proximity")] +
+  benchmarkPRI.1$coefficients[c("proximity:highTURNOUT")] +
+  benchmarkPRI.1$coefficients[c("proximity:PANstr")]+ 
+  benchmarkPRI.1$coefficients[c("proximity:highTURNOUT:PANstr")]
 
 seBM[1,1]<-sqrt(grad_g_pri%*% covBMpri %*% t(grad_g_pri))
 
@@ -396,9 +593,10 @@ seBM[3,1]<-sqrt(grad_g_pan%*% covBMpri %*% t(grad_g_pan))
 ```
 
 
-The same model for AMLO and the other parties: 
+The same model but testing for other parties: 
 ```{r}
-benchmarkPRD.1 <- lm( AMLOa ~ proximity*PRIstr*highTURNOUT+proximity*PRDstr*highTURNOUT+proximity*PANstr*highTURNOUT+     
+benchmarkPRD.1 <- lm( AMLOa ~ proximity*PRIstr*highTURNOUT+
+                        proximity*PRDstr*highTURNOUT+proximity*PANstr*highTURNOUT+     
                          PRI09a+PRD09a+PAN09a+PART09+
                          lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
                          EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
@@ -428,9 +626,18 @@ grad_g_prd <-  jacobian(g_prd, benchmarkPRD.1$coef)
 grad_g_pan <-  jacobian(g_pan, benchmarkPRD.1$coef)
 
 
-slopesBM[1,2] <- benchmarkPRD.1$coefficients[c("proximity")] + benchmarkPRD.1$coefficients[c("proximity:highTURNOUT")] + benchmarkPRD.1$coefficients[c("proximity:PRIstr")]+  benchmarkPRD.1$coefficients[c("proximity:PRIstr:highTURNOUT")]
-slopesBM[2,2] <- benchmarkPRD.1$coefficients[c("proximity")] + benchmarkPRD.1$coefficients[c("proximity:highTURNOUT")] + benchmarkPRD.1$coefficients[c("proximity:PRDstr")]+  benchmarkPRD.1$coefficients[c("proximity:highTURNOUT:PRDstr")]
-slopesBM[3,2] <- benchmarkPRD.1$coefficients[c("proximity")] + benchmarkPRD.1$coefficients[c("proximity:highTURNOUT")] + benchmarkPRD.1$coefficients[c("proximity:PANstr")]+  benchmarkPRD.1$coefficients[c("proximity:highTURNOUT:PANstr")]
+slopesBM[1,2] <- benchmarkPRD.1$coefficients[c("proximity")] +
+  benchmarkPRD.1$coefficients[c("proximity:highTURNOUT")] +
+  benchmarkPRD.1$coefficients[c("proximity:PRIstr")]+ 
+  benchmarkPRD.1$coefficients[c("proximity:PRIstr:highTURNOUT")]
+slopesBM[2,2] <- benchmarkPRD.1$coefficients[c("proximity")] +
+  benchmarkPRD.1$coefficients[c("proximity:highTURNOUT")] +
+  benchmarkPRD.1$coefficients[c("proximity:PRDstr")]+ 
+  benchmarkPRD.1$coefficients[c("proximity:highTURNOUT:PRDstr")]
+slopesBM[3,2] <- benchmarkPRD.1$coefficients[c("proximity")] +
+  benchmarkPRD.1$coefficients[c("proximity:highTURNOUT")] +
+  benchmarkPRD.1$coefficients[c("proximity:PANstr")]+ 
+  benchmarkPRD.1$coefficients[c("proximity:highTURNOUT:PANstr")]
 seBM[1,2]<-sqrt(grad_g_pri%*% covBMprd %*% t(grad_g_pri))
 seBM[2,2]<-sqrt(grad_g_prd%*% covBMprd %*% t(grad_g_prd))
 seBM[3,2]<-sqrt(grad_g_pan%*% covBMprd %*% t(grad_g_pan))
@@ -466,9 +673,18 @@ grad_g_prd <-  jacobian(g_prd, benchmarkPAN.1$coef)
 grad_g_pan <-  jacobian(g_pan, benchmarkPAN.1$coef)
 
 
-slopesBM[1,3] <- benchmarkPAN.1$coefficients[c("proximity")] + benchmarkPAN.1$coefficients[c("proximity:highTURNOUT")] + benchmarkPAN.1$coefficients[c("proximity:PRIstr")]+  benchmarkPAN.1$coefficients[c("proximity:PRIstr:highTURNOUT")]
-slopesBM[2,3] <- benchmarkPAN.1$coefficients[c("proximity")] + benchmarkPAN.1$coefficients[c("proximity:highTURNOUT")] + benchmarkPAN.1$coefficients[c("proximity:PRDstr")]+  benchmarkPAN.1$coefficients[c("proximity:highTURNOUT:PRDstr")]
-slopesBM[3,3] <- benchmarkPAN.1$coefficients[c("proximity")] + benchmarkPAN.1$coefficients[c("proximity:highTURNOUT")] + benchmarkPAN.1$coefficients[c("proximity:PANstr")]+  benchmarkPAN.1$coefficients[c("proximity:highTURNOUT:PANstr")]
+slopesBM[1,3] <- benchmarkPAN.1$coefficients[c("proximity")] +
+  benchmarkPAN.1$coefficients[c("proximity:highTURNOUT")] +
+  benchmarkPAN.1$coefficients[c("proximity:PRIstr")]+ 
+  benchmarkPAN.1$coefficients[c("proximity:PRIstr:highTURNOUT")]
+slopesBM[2,3] <- benchmarkPAN.1$coefficients[c("proximity")] +
+  benchmarkPAN.1$coefficients[c("proximity:highTURNOUT")] +
+  benchmarkPAN.1$coefficients[c("proximity:PRDstr")]+ 
+  benchmarkPAN.1$coefficients[c("proximity:highTURNOUT:PRDstr")]
+slopesBM[3,3] <- benchmarkPAN.1$coefficients[c("proximity")] +
+  benchmarkPAN.1$coefficients[c("proximity:highTURNOUT")] +
+  benchmarkPAN.1$coefficients[c("proximity:PANstr")]+ 
+  benchmarkPAN.1$coefficients[c("proximity:highTURNOUT:PANstr")]
 seBM[1,3]<-sqrt(grad_g_pri%*% covBMpan %*% t(grad_g_pri))
 seBM[2,3]<-sqrt(grad_g_prd%*% covBMpan %*% t(grad_g_prd))
 seBM[3,3]<-sqrt(grad_g_pan%*% covBMpan %*% t(grad_g_pan))
@@ -503,20 +719,38 @@ grad_g_pri <-  jacobian(g_pri, benchmarkPART.1$coef)
 grad_g_prd <-  jacobian(g_prd, benchmarkPART.1$coef)
 grad_g_pan <-  jacobian(g_pan, benchmarkPART.1$coef)
 
-slopesBM[1,4] <- benchmarkPART.1$coefficients[c("proximity")] + benchmarkPART.1$coefficients[c("proximity:highTURNOUT")] + benchmarkPART.1$coefficients[c("proximity:PRIstr")]+  benchmarkPART.1$coefficients[c("proximity:PRIstr:highTURNOUT")]
-slopesBM[2,4] <- benchmarkPART.1$coefficients[c("proximity")] + benchmarkPART.1$coefficients[c("proximity:highTURNOUT")] + benchmarkPART.1$coefficients[c("proximity:PRDstr")]+  benchmarkPART.1$coefficients[c("proximity:highTURNOUT:PRDstr")]
-slopesBM[3,4] <- benchmarkPART.1$coefficients[c("proximity")] + benchmarkPART.1$coefficients[c("proximity:highTURNOUT")] + benchmarkPART.1$coefficients[c("proximity:PANstr")]+  benchmarkPART.1$coefficients[c("proximity:highTURNOUT:PANstr")]
+slopesBM[1,4] <- benchmarkPART.1$coefficients[c("proximity")] +
+  benchmarkPART.1$coefficients[c("proximity:highTURNOUT")] +
+  benchmarkPART.1$coefficients[c("proximity:PRIstr")]+ 
+  benchmarkPART.1$coefficients[c("proximity:PRIstr:highTURNOUT")]
+slopesBM[2,4] <- benchmarkPART.1$coefficients[c("proximity")] +
+  benchmarkPART.1$coefficients[c("proximity:highTURNOUT")] +
+  benchmarkPART.1$coefficients[c("proximity:PRDstr")]+ 
+  benchmarkPART.1$coefficients[c("proximity:highTURNOUT:PRDstr")]
+slopesBM[3,4] <- benchmarkPART.1$coefficients[c("proximity")] +
+  benchmarkPART.1$coefficients[c("proximity:highTURNOUT")] +
+  benchmarkPART.1$coefficients[c("proximity:PANstr")]+ 
+  benchmarkPART.1$coefficients[c("proximity:highTURNOUT:PANstr")]
 
 seBM[1,4]<-sqrt(grad_g_pri%*% covBMpart %*% t(grad_g_pri))
 seBM[2,4]<-sqrt(grad_g_prd%*% covBMpart %*% t(grad_g_prd))
 seBM[3,4]<-sqrt(grad_g_pan%*% covBMpart %*% t(grad_g_pan))
 ```
 
+<<<<<<< HEAD
 Table 1: 
 
 #Molly: getting this error: the condition has length > 1 and only the first element will be usedthe condition has length > 1 and only the first element will be usedlength of NULL cannot be changedlength of NULL cannot be changedlength of NULL cannot be changedlength of NULL cannot be changedlength of NULL cannot be changed
+=======
+### Table 1
+
+OLS Results with robust standard errors, as presented in the model. Below you will see both the table presented in the article using RSE and a version updated with classical standard errors. We see that the RSEs are, at times, at least 2x higher than classical SEs. As such, we will continue to examine potential model mis-specification here. 
+
+It is also notable that the results here slightly differ from those presented in the initial paper. After looking thoroughly, we could not identify the source of these differences. Notably, here, the number of observations in our dataset at 11,644. In the full appendix table the author cites N = 10,567. As such, I suspect the author omitted data (or somehow it was omitted by R) in a manner not discussed in the original paper, thus slightly altering the results. I note that I do not see any code deleting these observations in the author's original file, and the author's original R code creates the same table as below. This will require further investigation. 
+
+>>>>>>> 6a9fcbaf6e458cd95142cff483218080bd41dbeb
 ```{r}
-stargazer(coeftest(benchmarkPRI.1, covBMpri), coeftest(benchmarkPRD.1, covBMprd), coeftest(benchmarkPAN.1, covBMpan), coeftest(benchmarkPART.1, covBMpart),style = "qje", star.cutoffs = c(0.05, 0.01, 0.001), digits=3,
+stargazer(coeftest(benchmarkPRI.1, covBMpri), coeftest(benchmarkPRD.1, covBMprd), coeftest(benchmarkPAN.1, covBMpan), coeftest(benchmarkPART.1, covBMpart),style = "qje", type = "text", star.cutoffs = c(0.05, 0.01, 0.001), digits=3,
           covariate.labels = c("Proximity", "PRI stronghold", "High Mobilization", "PRD stronghold","PAN stronghold", "PRI 2009", "PRD2009", "PAN2009", "Turnout 2009", "Population Log", "Population over 18 ",
                                "Population over 65", "Area", "Density", "Indigenous","Catholic","Nonreligious","Education","College degree","Illiteracy","Inhabitants per house","Population in the labor market",
                                "Female population in the labor market", "No insurance","Female head of household","Inhabitants per room", "Dirt floor", "All services", "No services", "Car", "Mobile phone", "Internet", "ACULCO" , "ALMOLOYA DE JUAREZ " , 
@@ -534,147 +768,35 @@ stargazer(coeftest(benchmarkPRI.1, covBMpri), coeftest(benchmarkPRD.1, covBMprd)
 ```
 
 
-Re-doing Table 1 using simulation/how shown in Section 7:
-```{r}
-#regressing different parties on proximity to soriana store 
-benchmarkPRI.1 <- lm( EPNa ~ proximity*PRIstr*highTURNOUT+proximity*PRDstr*highTURNOUT+proximity*PANstr*highTURNOUT+     
-                         PRI09a+PRD09a+PAN09a+PART09+
-                         lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
-                         EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
-                         PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
-                         PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
-                         CAR+CELULAR+INTERNET+
-                         id_mun, data=data, x=TRUE, y=TRUE)
+**Classical Standard Errors**
 
-benchmarkPRD.1 <- lm( AMLOa ~ proximity*PRIstr*highTURNOUT+proximity*PRDstr*highTURNOUT+proximity*PANstr*highTURNOUT+     
-                         PRI09a+PRD09a+PAN09a+PART09+
-                         lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
-                         EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
-                         PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
-                         PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
-                         CAR+CELULAR+INTERNET+
-                         id_mun, data=data, x=TRUE, y=TRUE)
-
-benchmarkPAN.1 <- lm( JVMa ~ proximity*PRIstr*highTURNOUT+proximity*PRDstr*highTURNOUT+proximity*PANstr*highTURNOUT+     
-                         PRI09a+PRD09a+PAN09a+PART09+
-                         lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
-                         EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
-                         PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
-                         PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
-                         CAR+CELULAR+INTERNET+
-                         id_mun, data=data, x=TRUE, y=TRUE)
-
-benchmarkPART.1 <- lm( PART ~ proximity*PRIstr*highTURNOUT+proximity*PRDstr*highTURNOUT+proximity*PANstr*highTURNOUT+     
-                          PRI09a+PRD09a+PAN09a+PART09+
-                          lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
-                          EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
-                          PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
-                          PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
-                          CAR+CELULAR+INTERNET+
-                          id_mun, data=data, x=TRUE, y=TRUE)
-```
-
-
-Simulation: 
-```{r}
-sim_coeff <- function(coeff, vcov){
-  return(mvtnorm::rmvnorm(1, mean = coeff, sigma = vcov))
-}
-```
+Here I present the results with classical standard errors. Here we see that in many instances robust standard errors are two-times (or larger) the size of classical standard errors. Some examples for this are on the coefficients for `PRI stronghold`, `PAN stronghold`, and the `PAN stronhold x Proximity x High Mobilization` interaction term. Here, perhaps, we find evidence of model mis-specification. Our group plans to investigate this further. 
 
 ```{r}
-prox <- seq(0, 100, by = .5)
-
-data %>%
-  summarise(proximity = median(proximity), PRIstr = median(PRIstr ), highTURNOUT = median(highTURNOUT), PRDstr = median(PRDstr),PANstr = median(PANstr), PRI09a = median(PRI09a), PRD09a = median(PRD09a), PAN09a= median(PAN09a), PART09= median(PART09),
-                          lnpop= median(lnpop), P18= median(P18), P65= median(P65), area= median(area), density= median(density), INDIGENOUS= median(INDIGENOUS), CATHOLIC= median(CATHOLIC), NONRELIGIOUS= median(NONRELIGIOUS),
-                          EDUCATION= median(EDUCATION), POSTEDUC= median(POSTEDUC), ILLITERACY= median(ILLITERACY), PROM_HNV= median(PROM_HNV),
-                          PEAprop= median(PEAprop), PEAfemale= median(PEAfemale), NOINSURANCE= median(NOINSURANCE), FEMALEJEFA= median(FEMALEJEFA),
-                          PERROOM= median(PERROOM),DIRTFLOOR= median(DIRTFLOOR),SERVICES= median(SERVICES) ,NO_SERVICES = median(NO_SERVICES),
-                          CAR= median(CAR),CELULAR= median(CELULAR),INTERNET= median(INTERNET)
-)-> med 
+stargazer(coeftest(benchmarkPRI.1), coeftest(benchmarkPRD.1), coeftest(benchmarkPAN.1), coeftest(benchmarkPART.1),style = "qje", type = "text", star.cutoffs = c(0.05, 0.01, 0.001), digits=3,
+          covariate.labels = c("Proximity", "PRI stronghold", "High Mobilization", "PRD stronghold","PAN stronghold", "PRI 2009", "PRD2009", "PAN2009", "Turnout 2009", "Population Log", "Population over 18 ",
+                               "Population over 65", "Area", "Density", "Indigenous","Catholic","Nonreligious","Education","College degree","Illiteracy","Inhabitants per house","Population in the labor market",
+                               "Female population in the labor market", "No insurance","Female head of household","Inhabitants per room", "Dirt floor", "All services", "No services", "Car", "Mobile phone", "Internet", "ACULCO" , "ALMOLOYA DE JUAREZ " , 
+                               "ALMOLOYA DEL RIO" , "AMANALCO" , "AMECAMECA" , "APAXCO" , "ATENCO" , "ATIZAPAN" , "ATIZAPAN DE ZARAGOZA" , "AXAPUSCO" , "AYAPANGO" , "CALIMAYA" , "CAPULHUAC" , "CHALCO" , "CHAPULTEPEC" ,
+                               "CHIAUTLA" , "CHICOLOAPAN" , "CHICONCUAC" , "CHIMALHUACAN" , "COACALCO DE BERRIOZABAL" , "COCOTITLAN" , "COYOTEPEC" , "CUAUTITLAN" , "CUAUTITLAN IZCALLI" , "ECATEPEC DE MORELOS" , "HUEHUETOCA",
+                               "HUEYPOXTLA" , "HUIXQUILUCAN" , "ISIDRO FABELA" , "IXTAPALUCA" , "IXTLAHUACA" , "JALTENCO" , "JILOTEPEC" , "JILOTZINGO" , "JIQUIPILCO" , "JOCOTITLAN" , "JOQUICINGO" , "JUCHITEPEC" , "LA PAZ" ,
+                               "LERMA" , "MELCHOR OCAMPO" , "METEPEC" , "MEXICALTZINGO" , "MORELOS" , "NAUCALPAN DE JUAREZ" , "NEXTLALPAN" , "NEZAHUALCOYOTL" , "NICOLAS ROMERO" , "OCOYOACAC" , "OCUILAN" , "OTUMBA" , 
+                               "OTZOLOTEPEC" , "PAPALOTLA" , "POLOTITLAN" , "RAYON" , "SAN ANTONIO LA ISLA" , "SAN FELIPE DEL PROGRESO" , "SAN MARTIN DE LAS PIRAMIDES" , "SAN MATEO ATENCO" , "SOYANIQUILPAN DE JUAREZ" , "TECAMAC" ,
+                               "TEMAMATLA" , "TEMASCALAPA" , "TEMOAYA" , "TENANGO DEL AIRE" , "TENANGO DEL VALLE" , "TEOLOYUCAN" , "TEOTIHUACAN" , "TEPETLAOXTOC" , "TEPOTZOTLAN" , "TEQUIXQUIAC" , "TEXCALYACAC" , "TEXCOCO" , "TEZOYUCA" ,
+                               "TIANGUISTENCO" , "TLALMANALCO" , "TLALNEPANTLA DE BAZ" , "TOLUCA" , "TONANITLA" , "TULTEPEC" , "TULTITLAN" , "VALLE DE CHALCO SOLIDARIDAD" , "VILLA DE ALLEND" , "VILLA DEL CARBON" , "VILLA VICTORIA" , 
+                               "XALATLACO" , "XONACATLAN" , "ZINACANTEPEC" , "ZUMPANGO" , "ALVARO OBREGON" , "AZCAPOTZALCO" , "BENITO JUAREZ" , "COYOACAN" , "CUAJIMALPA DE MORELOS" , "CUAUHTEMOC" , "GUSTAVO A. MADERO" , "IZTACALCO" , 
+                               "IZTAPALAPA" , "MAGDALENA CONTRERAS" , "MIGUEL HIDALGO" , "MILPA ALTA" , "TLAHUAC" , "TLALPAN" , "VENUSTIANO CARRANZA" , "XOCHIMILCO"))
 ```
-
-
-```{r}
-tibble(PRIstr = rep(med$PRIstr, length (prox)), 
-       highTURNOUT= rep(med$highTURNOUT, length (prox)), 
-       PRDstr= rep(med$PRDstr, length (prox)), 
-       PANstr= rep(med$PANstr, length (prox)), 
-       PRI09a= rep(med$PRI09a, length (prox)), 
-       PAN09a= rep(med$PAN09a, length (prox)),
-       PART09= rep(med$PART09, length (prox)),
-       PRD09a= rep(med$PRD09a, length (prox)),
-       lnpop= rep(med$lnpop, length (prox)),
-       P18= rep(med$P18, length (prox)),
-       P65= rep(med$P65, length (prox)),
-     area= rep(med$area, length (prox)),
-     density= rep(med$density, length (prox)),
-     INDIGENOUS= rep(med$INDIGENOUS, length (prox)),
-     CATHOLIC= rep(med$CATHOLIC, length (prox)),
-     NONRELIGIOUS = rep(med$NONRELIGIOUS, length (prox)),
-      EDUCATION = rep( med$EDUCATION, length (prox)),
-              POSTEDUC = rep(med$POSTEDUC, length (prox)),
-               ILLITERACY = rep(med$ILLITERACY, length (prox)),
-               PROM_HNV = rep(med$PROM_HNV , length (prox)),
-                 PEAprop= rep(med$PEAprop , length (prox)),
-                  PEAfemale = rep(med$PEAfemale , length (prox)),
-                 NOINSURANCE = rep(med$NOINSURANCE , length (prox)),
-                   FEMALEJEFA = rep(med$FEMALEJEFA, length (prox)),
-                     PERROOM= rep( med$PERROOM, length (prox)),   
-    DIRTFLOOR= rep(med$DIRTFLOOR, length (prox)),                   
-       SERVICES= rep(med$SERVICES, length (prox)),   
-  NO_SERVICES= rep(med$NO_SERVICES, length (prox)),   
-     CAR= rep(med$CAR, length (prox)),   
-CELULAR= rep(med$CELULAR, length (prox)),   
-INTERNET= rep(med$INTERNET, length (prox)),  
-) %>% 
-  arrange(PRIstr, highTURNOUT, PRDstr, PANstr, PRI09a, PRD09a, PAN09a, PART09,
-                          lnpop, P18, P65, area, density, INDIGENOUS, CATHOLIC, NONRELIGIOUS,
-                          EDUCATION, POSTEDUC, ILLITERACY, PROM_HNV,
-                          PEAprop, PEAfemale, NOINSURANCE, FEMALEJEFA,
-                          PERROOM,DIRTFLOOR,SERVICES,NO_SERVICES,
-                          CAR,CELULAR,INTERNET) -> data_sim
-```
-```{r}
-head(data_sim)
-```
-
-
-```{r}
-#simulating coefficients from lm
-coeff_sim <- sim_coeff(benchmarkPRI.1$coefficients, vcov(benchmarkPRI.1))
-```
-
-Really not sure on this... something is breaking down in the matrix multiplication.
-```{r}
-#simulating y and calculating the QOI 
-sim_E <- function(data_sim, coeff_sim){
-  mu <- mean(coeff_sim)
-  sd <- sqrt(var(coeff_sim))
-  Xbeta <- cbind(1, as.matrix(data_sim)) %*% as.matrix(coeff_sim)
-  Y <- Xbeta + rnorm(length(prox), mean = mu, sd = sd)
-}
-```
-
-
-```{r}
-sim_run <- function(fit, data_sim){
-  coeff_sim <- sim_coeff(fit$coefficients, vcov(fit))
-  EY_sim <- sim_E(data_sim, coeff_sim)
-  return(EY_sim)
-}
-
-sim_run(benchmarkPRI.1, data_sim)
-```
-
 
 
 
 ## Table 2
 ```{r}
 BM<-matrix(NA,6,4)
+```
 
+
+```{r}
 for(j in 1:4){
   BM[1,j]<-specify_decimal(slopesBM[1,j], 3)
   BM[2,j]<-paste("(",specify_decimal(seBM[1,j], 3),")", sep="")
@@ -686,6 +808,26 @@ for(j in 1:4){
 
 xtable(BM)
 ```
+
+Latex code for the table: 
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{rllll}
+  \hline
+ & 1 & 2 & 3 & 4 \\ 
+  \hline
+1 & -0.166 & -0.001 & -0.024 & -0.195 \\ 
+  2 & (2.480) & (4.010) & (2.202) & (1.805) \\ 
+  3 & 17.452 & -6.768 & -4.229 & 4.305 \\ 
+  4 & (1.952) & (2.952) & (1.460) & (1.457) \\ 
+  5 & -3.678 & -5.870 & 5.425 & -4.469 \\ 
+  6 & (2.031) & (3.001) & (1.678) & (1.515) \\ 
+   \hline
+\end{tabular}
+\end{table}
+
+Note, here, this differs strongly from the table presented on page 798 of our paper. This is likely related to the number of observations comment made at the outset of our Table 1 re-creation. 
 
 ## Figure 2
 ```{r}
@@ -743,7 +885,8 @@ g <- glm(JVMa ~ proximity*PRIstr*highTURNOUT+proximity*PRDstr*highTURNOUT+proxim
            CAR+CELULAR+INTERNET+
            id_mun, data=data, family = 'gaussian')
 
-marg<-marg(mod = g, var_interest = c("proximity"), type = 'levels', data=data[data$PRDstr==1 & data$highTURNOUT==1,],
+marg<-marg(mod = g, var_interest = c("proximity"), 
+           type = 'levels', data=data[data$PRDstr==1 & data$highTURNOUT==1,],
            at_var_interest = seq(1/20, 1/2.5, 1/1000),cofint=.95)
 
 mean <- marg[[1]]$Margin
@@ -762,7 +905,8 @@ datasim$dv[703:1053]<-"Vázquez Mota"
 
 ggplot()+
   geom_line(data=datasim, aes(x=distance, y=mean,  linetype=dv))+
-  geom_ribbon(data=datasim, aes(x=distance,  ymin=lower, ymax=upper, fill=dv),  alpha=0.5)+theme_bw()+
+  geom_ribbon(data=datasim, aes(x=distance,  ymin=lower, 
+                      ymax=upper, fill=dv),  alpha=0.5)+theme_bw()+
   ylab("Predicted vote shares (%)")+
   xlab("Distance to Soriana (km)")+xlim(2.5,20)+ylim(0,50)+ 
   scale_fill_manual(values = c("#F0E442","red", "deepskyblue2"), name="")+
@@ -772,7 +916,20 @@ ggplot()+
         legend.text = element_text(size = 18))
 ```
 
+<<<<<<< HEAD
 ## Table 3: Estimation of the Effects #Molly (this still doesn't produce a table)
+=======
+Figure 2 visualizes the predicted relationship between the distance to a Soriana store and the percent of a vote share received by a candidate, showing that the PRI candidate earned a vote increase in areas that were closer to Soriana stores. This figure is repeated as it was in the original paper, but notably the model uses sample *proximities* not *distances* to Soriana stores, and thus it is mis-labeled here. We will be testing if this trend holds for distance.
+
+This figure largely matches that found on page 799 of the article, though I note that in the article the Peña Nieto curve rises above 40% and López Obrador drops below 20%. This again is likely due to the difference in data between this model and that of the paper.
+
+# Table 3: Effects of the Location of Soriana Stores on Voting Behavior (Molly)
+
+Table 3 is designed to illustrate that the vote-buying effort influenced only voters within a certain proximity. It compares the aggregated votes in PRD strongholds of Pena Nieto, the PRI beneficiary of the vote-buying effort, and Lopez Obrador, the PRD candidate who lost out due to vote buying. It imagines a counterfactual in which all PRD strongholds were either 15km or 2.5 km from the nearest Soriana store. In the paper, the table shows very little effect at 15km, but a much stronger effect at 2.5 km. When we replicated this table, we were unable to reach the same figures.
+
+
+Regressing proximity and stronghold on EPN voteshare 
+>>>>>>> 6a9fcbaf6e458cd95142cff483218080bd41dbeb
 ```{r}
 #data
 g <- glm(EPNa ~ proximity*PRIstr*highTURNOUT+proximity*PRDstr*highTURNOUT+proximity*PANstr*highTURNOUT+     
@@ -783,28 +940,49 @@ g <- glm(EPNa ~ proximity*PRIstr*highTURNOUT+proximity*PRDstr*highTURNOUT+proxim
            PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
            CAR+CELULAR+INTERNET+
            id_mun, data=data, family = 'gaussian')
-
-marg<-marg(mod = g, var_interest = c("proximity"), type = 'levels', data=data[data$PRDstr==1 & data$highTURNOUT==1,],
+```
+Marg function estimates the predictive effects and levels for variables within a model
+```{r}
+marg<-marg(mod = g, var_interest = c("proximity"), 
+           type = 'levels', data=data[data$PRDstr==1 & data$highTURNOUT==1,],
            at_var_interest = c(1/15, 1/2.5))
-
+```
+Estimating the effect on PRI and PRD if all stores were 2.5km 15km away
+```{r}
 #At 15 km
 PRIat15<-c()
 PRIat2.5<-c()
+#predictions if 2.5 and 15 away
 low<-round(sum((marg[[1]]$`Lower CI (95%)`[1]/100)*data[data$PRDstr==1 & data$highTURNOUT==1,]$ln2012))
 high<-round(sum((marg[[1]]$`Upper CI (95%)`[1]/100)*data[data$PRDstr==1 & data$highTURNOUT==1,]$ln2012))
-mean<-round(sum((marg[[1]]$`Margin`[1]/100)*data[data$PRDstr==1 & data$highTURNOUT==1,]$ln2012))
+mean<-round(sum((marg[[1]]$`Margin`[1]/100)*data[data$PRDstr==1 & 
+                                      data$highTURNOUT==1,]$ln2012))
 
-PRIat15<-c(sum(data[data$PRDstr==1 & data$highTURNOUT==1,]$epn2012)-mean, sum(data[data$PRDstr==1 & data$highTURNOUT==1,]$epn2012)-low, sum(data[data$PRDstr==1 & data$highTURNOUT==1,]$epn2012)-high)
+#predictions minus actual
+PRIat15<-c(sum(data[data$PRDstr==1 & data$highTURNOUT==1,]$epn2012)-mean,
+           sum(data[data$PRDstr==1 & data$highTURNOUT==1,]$epn2012)-low, 
+           sum(data[data$PRDstr==1 & data$highTURNOUT==1,]$epn2012)-high)
 
-low<-round(sum((marg[[1]]$`Lower CI (95%)`[2]/100)*data[data$PRDstr==1 & data$highTURNOUT==1,]$ln2012))
-high<-round(sum((marg[[1]]$`Upper CI (95%)`[2]/100)*data[data$PRDstr==1 & data$highTURNOUT==1,]$ln2012))
-mean<-round(sum((marg[[1]]$`Margin`[2]/100)*data[data$PRDstr==1 & data$highTURNOUT==1,]$ln2012))
+PRIat15
+```
 
-PRIat2.5<-c(mean-sum(data[data$PRDstr==1 & data$highTURNOUT==1,]$epn2012), low-sum(data[data$PRDstr==1 & data$highTURNOUT==1,]$epn2012), high-sum(data[data$PRDstr==1 & data$highTURNOUT==1,]$epn2012))
+```{r}
+low<-round(sum((marg[[1]]$`Lower CI (95%)`[2]/100)*data[data$PRDstr==1 
+                                            & data$highTURNOUT==1,]$ln2012))
+high<-round(sum((marg[[1]]$`Upper CI (95%)`[2]/100)*data[data$PRDstr==1
+                                              & data$highTURNOUT==1,]$ln2012))
+mean<-round(sum((marg[[1]]$`Margin`[2]/100)*data[data$PRDstr==1 & 
+                                                   data$highTURNOUT==1,]$ln2012))
 
+PRIat2.5<-c(mean-sum(data[data$PRDstr==1 & data$highTURNOUT==1,]$epn2012),
+            low-sum(data[data$PRDstr==1 & data$highTURNOUT==1,]$epn2012), 
+            high-sum(data[data$PRDstr==1 & data$highTURNOUT==1,]$epn2012))
 
-g <- glm(AMLOa ~ proximity*PRIstr*highTURNOUT+proximity*PRDstr*highTURNOUT+proximity*PANstr*highTURNOUT+     
-           PRI09a+PRD09a+PAN09a+PART09+
+PRIat2.5
+```
+
+```{r}
+g <- glm(AMLOa ~ proximity*PRIstr*highTURNOUT+proximity*PRDstr*highTURNOUT+proximity*PANstr*highTURNOUT+       PRI09a+PRD09a+PAN09a+PART09+
            lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
            EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
            PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
@@ -812,56 +990,99 @@ g <- glm(AMLOa ~ proximity*PRIstr*highTURNOUT+proximity*PRDstr*highTURNOUT+proxi
            CAR+CELULAR+INTERNET+
            id_mun, data=data, family = 'gaussian')
 
-marg <-marg(mod = g, var_interest = c("proximity"), type = 'levels', data=data[data$PRDstr==1 & data$highTURNOUT==1,],
+marg <-marg(mod = g, var_interest = c("proximity"), type = 'levels',
+            data=data[data$PRDstr==1 & data$highTURNOUT==1,],
            at_var_interest = c(1/15, 1/2.5))
+```
 
-
+```{r}
 #At 15 km
 PRDat15<-c()
 PRDat2.5<-c()
-low<-round(sum((marg[[1]]$`Lower CI (95%)`[1]/100)*data[data$PRDstr==1 & data$highTURNOUT==1,]$ln2012))
-high<-round(sum((marg[[1]]$`Upper CI (95%)`[1]/100)*data[data$PRDstr==1 & data$highTURNOUT==1,]$ln2012))
-mean<-round(sum((marg[[1]]$`Margin`[1]/100)*data[data$PRDstr==1 & data$highTURNOUT==1,]$ln2012))
+low<-round(sum((marg[[1]]$`Lower CI (95%)`[1]/100)*data[data$PRDstr==1 
+                                           & data$highTURNOUT==1,]$ln2012))
+high<-round(sum((marg[[1]]$`Upper CI (95%)`[1]/100)*data[data$PRDstr==1
+                                          & data$highTURNOUT==1,]$ln2012))
+mean<-round(sum((marg[[1]]$`Margin`[1]/100)*data[data$PRDstr==1
+                                         & data$highTURNOUT==1,]$ln2012))
 
-PRDat15<-c(mean-sum(data[data$PRDstr==1 & data$highTURNOUT==1,]$amlo2012), low-sum(data[data$PRDstr==1 & data$highTURNOUT==1,]$amlo2012), high-sum(data[data$PRDstr==1 & data$highTURNOUT==1,]$amlo2012))
+PRDat15<-c(mean-sum(data[data$PRDstr==1 & data$highTURNOUT==1,]$amlo2012), 
+           low-sum(data[data$PRDstr==1 & data$highTURNOUT==1,]$amlo2012),
+           high-sum(data[data$PRDstr==1 & data$highTURNOUT==1,]$amlo2012))
 
-low<-round(sum((marg[[1]]$`Lower CI (95%)`[2]/100)*data[data$PRDstr==1 & data$highTURNOUT==1,]$ln2012))
-high<-round(sum((marg[[1]]$`Upper CI (95%)`[2]/100)*data[data$PRDstr==1 & data$highTURNOUT==1,]$ln2012))
-mean<-round(sum((marg[[1]]$`Margin`[2]/100)*data[data$PRDstr==1 & data$highTURNOUT==1,]$ln2012))
+PRDat15
+```
 
+```{r}
+low<-round(sum((marg[[1]]$`Lower CI (95%)`[2]/100)*data[data$PRDstr==1 &
+                          data$highTURNOUT==1,]$ln2012))
+high<-round(sum((marg[[1]]$`Upper CI (95%)`[2]/100)*data[data$PRDstr==1 &
+                                          data$highTURNOUT==1,]$ln2012))
+mean<-round(sum((marg[[1]]$`Margin`[2]/100)*data[data$PRDstr==1 & 
+                                data$highTURNOUT==1,]$ln2012))
+
+PRDat2.5<-c(mean-sum(data[data$PRDstr==1 & data$highTURNOUT==1,]$amlo2012), 
+            low-sum(data[data$PRDstr==1 & data$highTURNOUT==1,]$amlo2012),
+            high-sum(data[data$PRDstr==1 & data$highTURNOUT==1,]$amlo2012))
+
+PRDat2.5
+```
+Trying to turn the results into a table--in progress
+```{r, eval = FALSE}
+results <- data.frame(PRIat15, PRIat2.5, PRDat15, PRDat2.5)
+
+<<<<<<< HEAD
 PRDat2.5<-c(mean-sum(data[data$PRDstr==1 & data$highTURNOUT==1,]$amlo2012), low-sum(data[data$PRDstr==1 & data$highTURNOUT==1,]$amlo2012), high-sum(data[data$PRDstr==1 & data$highTURNOUT==1,]$amlo2012))
 ```
 
 ## Figure 3
 # Molly: I had to edit lines 850 and 855 to make it work
+=======
+results
+
+<<<<<<< HEAD
+xtable(results)
+stargazer(results)
+=======
+>>>>>>> 89b00b4189ce4e98fef10ba0ee452ed6839f5bac
+```
+
+
+## Figure 3: Robustness check and placebo tests
+
+Figure 3 offers on the left, a robustness check, and on the right a placebo test. The robustness check (3A) test the marginal effect of proximity to a Soriana store for proximity in PRD strongholds using three different alternative model specifications. Instead of coding the vote shares the number of registered voters supporting each candidate, the author coded them as the proportion of the total number of votes, the vote share change from 2009 to 2012, and driving proximity. In all of these cases, the marginal effects are similar to the magintudes shown in Table 2. The placebo test (3B) tests for unobserved characteristics in the precints, by applying the replicating the analysis in the following ways: with the dependent variable as the vote shares from the 2006 and 2009 federal elections, with precints outside the State of Mexico and Mexico City, and with proximity to Walmart-Mexico stores instead of Soriana. The effects of these tests are not significantly different from zero.
+
+
+>>>>>>> 6a9fcbaf6e458cd95142cff483218080bd41dbeb
 ```{r}
 results <- read.table(header=T, con <- textConnection('
 Stronghold DV	Coefficient	StdError	Model	 Order
-                                                      PRD "PRI"	36.173	16.187	"Model 1: Relative vote share"	1	
-                                                      PRD "PRD"	-32.573	7.584	"Model 1: Relative vote share"	2	
-                                                      PRD "PRI"	32.166	11.547	"Model 2: Vote share change 2009-2012"	1	
-                                                      PRD "PRD"	-29.444	8.562	"Model 2: Vote share change 2009-2012"	2	
-                                                      PRD "PRI"	49.939	15.148	"Model 3: Driving Proximity"	1	
-                                                      PRD "PRD"	-47.396	25.959	"Model 3: Driving Proximity"	2	
-                                                      PRI "PRI"	-0.020	0.071	"Model 1: Relative vote share"	1	
-                                                      PRI "PRD"	0.065	0.051	"Model 1: Relative vote share"	2	
-                                                      PRI "PRI"	-0.029	0.080	"Model 2: Vote share change 2009-2012"	1
-                                                      PRI "PRD"	-0.002	0.046	"Model 2: Vote share change 2009-2012"	2
-                                                      PRI "PRI"	-0.009	0.001	"Model 3: Driving Proximity"	1
-                                                      PRI "PRD"	0.006	0.002	"Model 3: Driving Proximity"	2
-                                                      PAN "PRI"	-2.298	2.553	"Model 1: Relative vote share"	1
-                                                      PAN "PRD"	-3.507	1.248	"Model 1: Relative vote share"	2
-                                                      PAN "PRI"	-2.163	1.630	"Model 2: Vote share change 2009-2012"	1
-                                                      PAN "PRD"	-4.113	0.763	"Model 2: Vote share change 2009-2012"	2
-                                                      PAN "PRI"	-2.777	4.976	"Model 3: Driving Proximity"	1
-                                                      PAN "PRD"	-0.700	4.262	"Model 3: Driving Proximity"	2	
+                  PRD "PRI"	36.173	16.187	"Model 1: Relative vote share"	1	
+              PRD "PRD"	-32.573	7.584	"Model 1: Relative vote share"	2	
+             PRD "PRI"	32.166	11.547	"Model 2: Vote share change 2009-2012"	1	
+       PRD "PRD"	-29.444	8.562	"Model 2: Vote share change 2009-2012"	2	
+      PRD "PRI"	49.939	15.148	"Model 3: Driving Proximity"	1	
+    PRD "PRD"	-47.396	25.959	"Model 3: Driving Proximity"	2	
+   PRI "PRI"	-0.020	0.071	"Model 1: Relative vote share"	1	
+         PRI "PRD"	0.065	0.051	"Model 1: Relative vote share"	2	
+    PRI "PRI"	-0.029	0.080	"Model 2: Vote share change 2009-2012"	1
+        PRI "PRD"	-0.002	0.046	"Model 2: Vote share change 2009-2012"	2
+         PRI "PRI"	-0.009	0.001	"Model 3: Driving Proximity"	1
+       PRI "PRD"	0.006	0.002	"Model 3: Driving Proximity"	2
+         PAN "PRI"	-2.298	2.553	"Model 1: Relative vote share"	1
+     PAN "PRD"	-3.507	1.248	"Model 1: Relative vote share"	2
+       PAN "PRI"	-2.163	1.630	"Model 2: Vote share change 2009-2012"	1
+    PAN "PRD"	-4.113	0.763	"Model 2: Vote share change 2009-2012"	2
+   PAN "PRI"	-2.777	4.976	"Model 3: Driving Proximity"	1
+     PAN "PRD"	-0.700	4.262	"Model 3: Driving Proximity"	2	
                                                       '))
 #close(con)
 
 results$min<-results$Coefficient-(1.96*results$StdError)
 results$max<-results$Coefficient+(1.96*results$StdError)
 
-results$Model <- factor(results$Model) # , levels=results$Model[order(results$Order)])
+results$Model <- factor(results$Model) 
+# , levels=results$Model[order(results$Order)])
 
 
 
@@ -873,50 +1094,53 @@ ggplot(results, aes(y=Model, x = Coefficient, shape=Stronghold, color=Stronghold
   geom_vline(xintercept = 0, linetype=2, color="red") +
   labs( x = "Marginal Effect of Proximity", y = "") +
   theme_bw()+
-  theme(legend.text = element_text(size = 18),
-        legend.title = element_text(siz=18, face="bold"),
+  theme(legend.text = element_text(size = 12),
+        legend.title = element_text(siz=12, face="bold"),
         legend.position="bottom")+
   theme(
-    axis.title.x = element_text(face="bold", size=18),
-    axis.title.y = element_text(face="bold", size=18, angle=90),
-    axis.text.x  = element_text( size=18),
-    strip.text.x = element_text(size=18),
-    axis.text.y  = element_text( size=18))+ scale_y_discrete(limit = c("Model 3: Driving Proximity",  "Model 2: Vote share change 2009-2012", "Model 1: Relative vote share" ),
-                                                             labels = c("Driving\nProximity",  "Vote share\nchange\n2009-2012", "Alternative\ncoding for\nvote share" ))+
+    axis.title.x = element_text(face="bold", size=12),
+    axis.title.y = element_text(face="bold", size=12, angle=90),
+    axis.text.x  = element_text( size=12),
+    strip.text.x = element_text(size=12),
+    axis.text.y  = element_text( size=12))+ 
+  
+scale_y_discrete(limit = c("Model 3: Driving Proximity", 
+        "Model 2: Vote share change 2009-2012", "Model 1: Relative vote share" ),
+                  labels = c("Driving\nProximity",  "Vote share\nchange\n2009-2012", "Alternative\ncoding for\nvote share" ))+
   scale_colour_manual(name="Stronghold",  
-                      values = c("PAN"="steelblue3", "PRI"="red", "PRD"="goldenrod3"))
+  values = c("PAN"="steelblue3", "PRI"="red", "PRD"="goldenrod3"))
 
 
 ##########################
 ##########################
 
 results <- read.table(header=T, con <- textConnection('
-                                                      Stronghold DV	Coefficient	StdError	Model	 Order
-                                                      PRD "PRI"	4.458	6.992	"Model 1: 2006 Election"	1	
-                                                      PRD "PRD"	21.475	18.431	"Model 1: 2006 Election"	1	
-                                                      PRD "PRI"	-11.068	9.221	"Model 2: 2009 Election"	2	
-                                                      PRD "PRD"	8.086	20.695	"Model 2: 2009 Election"	2	
-                                                      PRD "PRI"	0.338	0.822	"Model 3: Precincts outside Mexico City and State of Mexico"	3	
-                                                      PRD "PRD"	0.257	0.8695	"Model 3: Precincts outside Mexico City and State of Mexico"	3	
-                                                      PRD "PRI"	3.671	2.273	"Model 4: Proximity to WalMart"	4	
-                                                      PRD "PRD"	-2.366	3.041	"Model 4: Proximity to WalMart"	4
-                                                      PRI "PRI"	-0.078	0.034	"Model 1: 2006 Election"	1	
-                                                      PRI "PRD"	0.141	0.063	"Model 1: 2006 Election"	1	
-                                                      PRI "PRI"	-0.070	0.098	"Model 2: 2009 Election"	2	
-                                                      PRI "PRD"	0.006	0.039	"Model 2: 2009 Election"	2	
-                                                      PRI "PRI"	0.077	0.194	"Model 3: Precincts outside Mexico City and State of Mexico"	3	
-                                                      PRI "PRD"	0.107	0.234	"Model 3: Precincts outside Mexico City and State of Mexico"	3	
-                                                      PRI "PRI"	0.100	0.196	"Model 4: Proximity to WalMart"	4	
-                                                      PRI "PRD"	-0.080	0.125	"Model 4: Proximity to WalMart"	4
-                                                      PAN "PRI"	-1.063	1.177	"Model 1: 2006 Election"	1	
-                                                      PAN "PRD"	-3.356	1.362	"Model 1: 2006 Election"	1	
-                                                      PAN "PRI"	-2.269	0.959	"Model 2: 2009 Election"	2	
-                                                      PAN "PRD"	3.347	0.674	"Model 2: 2009 Election"	2	
-                                                      PAN "PRI"	-0.233	0.201	"Model 3: Precincts outside Mexico City and State of Mexico"	3	
-                                                      PAN "PRD"	-0.209	0.253	"Model 3: Precincts outside Mexico City and State of Mexico"	3	
-                                                      PAN "PRI"	-0.730	0.624	"Model 4: Proximity to WalMart"	4	
-                                                      PAN "PRD"	-1.517	1.472	"Model 4: Proximity to WalMart"	4
-                                                      '))
+                     Stronghold DV	Coefficient	StdError	Model	 Order
+                    PRD "PRI"	4.458	6.992	"Model 1: 2006 Election"	1	
+                    PRD "PRD"	21.475	18.431	"Model 1: 2006 Election"	1	
+                        PRD "PRI"	-11.068	9.221	"Model 2: 2009 Election"	2	
+                    PRD "PRD"	8.086	20.695	"Model 2: 2009 Election"	2	
+ PRD "PRI"	0.338	0.822	"Model 3: Precincts outside Mexico City and State of Mexico"	3	
+  PRD "PRD"	0.257	0.8695	"Model 3: Precincts outside Mexico City and State of Mexico"	3	
+                PRD "PRI"	3.671	2.273	"Model 4: Proximity to WalMart"	4	
+              PRD "PRD"	-2.366	3.041	"Model 4: Proximity to WalMart"	4
+                  PRI "PRI"	-0.078	0.034	"Model 1: 2006 Election"	1	
+                PRI "PRD"	0.141	0.063	"Model 1: 2006 Election"	1	
+                          PRI "PRI"	-0.070	0.098	"Model 2: 2009 Election"	2	
+                           PRI "PRD"	0.006	0.039	"Model 2: 2009 Election"	2	
+   PRI "PRI"	0.077	0.194	"Model 3: Precincts outside Mexico City and State of Mexico"	3	
+ PRI "PRD"	0.107	0.234	"Model 3: Precincts outside Mexico City and State of Mexico"	3	
+                 PRI "PRI"	0.100	0.196	"Model 4: Proximity to WalMart"	4	
+                    PRI "PRD"	-0.080	0.125	"Model 4: Proximity to WalMart"	4
+                     PAN "PRI"	-1.063	1.177	"Model 1: 2006 Election"	1	
+                      PAN "PRD"	-3.356	1.362	"Model 1: 2006 Election"	1	
+         PAN "PRI"	-2.269	0.959	"Model 2: 2009 Election"	2	
+                   PAN "PRD"	3.347	0.674	"Model 2: 2009 Election"	2	
+   PAN "PRI"	-0.233	0.201	"Model 3: Precincts outside Mexico City and State of Mexico"	3	
+ PAN "PRD"	-0.209	0.253	"Model 3: Precincts outside Mexico City and State of Mexico"	3	
+                            PAN "PRI"	-0.730	0.624	"Model 4: Proximity to WalMart"	4	
+                       PAN "PRD"	-1.517	1.472	"Model 4: Proximity to WalMart"	4
+                                  '))
 close(con)
 
 results$min<-results$Coefficient-(1.96*results$StdError)
@@ -930,21 +1154,28 @@ ggplot(results, aes(y=Model, x = Coefficient, shape=Stronghold, color=Stronghold
   geom_vline(xintercept = 0, linetype=2, color="red") +
   labs( x = "Marginal Effect of Proximity", y = "") +
   theme_bw()+
-  theme(legend.text = element_text(size = 18),
-        legend.title = element_text(siz=18, face="bold"),
+  theme(legend.text = element_text(size = 12),
+        legend.title = element_text(siz=12, face="bold"),
         legend.position="bottom")+
   theme(
-    axis.title.x = element_text(face="bold", size=18),
-    axis.title.y = element_text(face="bold", size=18, angle=90),
-    axis.text.x  = element_text( size=18),
-    strip.text.x = element_text(size=18),
-    axis.text.y  = element_text( size=18))+ scale_y_discrete(limit = c("Model 4: Proximity to WalMart", 	"Model 3: Precincts outside Mexico City and State of Mexico", "Model 2: 2009 Election", "Model 1: 2006 Election" ),
-                                                             labels=c("Proximity\nto WalMart",  "Outside\nMexico City\nand State\nof Mexico", "2009\nElection", "2006\nElection" ))+
+    axis.title.x = element_text(face="bold", size=12),
+    axis.title.y = element_text(face="bold", size=12, angle=90),
+    axis.text.x  = element_text( size=12),
+    strip.text.x = element_text(size=12),
+    axis.text.y  = element_text( size=12))+ 
+  scale_y_discrete(limit = c("Model 4: Proximity to WalMart", 
+                  "Model 3: Precincts outside Mexico City and State of Mexico", 
+                  "Model 2: 2009 Election", "Model 1: 2006 Election" ),
+                            labels=c("Proximity\nto WalMart", 
+                          "Outside\nMexico City\nand State\nof Mexico", 
+                          "2009\nElection", "2006\nElection" ))+
   scale_colour_manual(name="Stronghold",  
-                      values = c("PAN"="steelblue3", "PRI"="red", "PRD"="goldenrod3"))
+                      values = c("PAN"="steelblue3",
+                                 "PRI"="red", "PRD"="goldenrod3"))
 
 ```
 
+<<<<<<< HEAD
 ## Figure 4
 #Molly: object 'distance' not found
 ```{r}
@@ -1218,5 +1449,6 @@ p <- ggplot(placebo, aes(x=placebo))+geom_histogram(binwidth=.5, colour="black",
   strip.text = element_text(size = 16))
 
 
+=======
+>>>>>>> 6a9fcbaf6e458cd95142cff483218080bd41dbeb
 
-```
