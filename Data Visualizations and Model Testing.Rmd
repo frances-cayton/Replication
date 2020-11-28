@@ -397,6 +397,7 @@ knitr::kable(broom::tidy(benchmarkPRI.1.log))
 table %>% filter(highTURNOUT == 1 & PRDstr == 1) -> subset
 nrow(subset)
 summary(subset$Distance.Quant)
+summary(subset$Distance.Decile)
 ```
 
 
