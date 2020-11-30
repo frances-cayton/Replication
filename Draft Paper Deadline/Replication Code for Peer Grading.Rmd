@@ -1,0 +1,1352 @@
+---
+title: "Replication Code for Peer Grading"
+output: html_document
+---
+
+```{r, results = 'hide', message = FALSE}
+library(foreign)
+library(stargazer)
+library(arm)
+library(rms)
+library(msm)
+library(systemfit)
+library(xtable)
+library(gtools)
+library(multiwayvcov)
+library(numDeriv)
+library(interplot)
+library(modmarg)
+library(tidyverse)
+library(stats)
+library(haven)
+library(systemfit)
+library(nnet)
+library(sjmisc)
+library(maptools)
+library(rgeos)
+library(Imap)
+library(spatstat)
+library(StatMeasures)
+library(sandwich)
+```
+
+```{r}
+load("datawork.RData")
+```
+
+```{r}
+#reclassifying municipality and district as factor variables
+table$id_mun<-factor(table$id_mun)
+table$id_dist<-factor(table$id_dist)
+```
+
+The original model: 
+
+```{r}
+benchmarkPRI.1.proximity <- lm( EPNa ~ proximity*PRIstr*highTURNOUT+
+                        proximity*PRDstr*highTURNOUT+proximity*PANstr*highTURNOUT+ 
+                         PRI09a+PRD09a+PAN09a+PART09+
+                         lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+                         EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+                         PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+                         PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+                         CAR+CELULAR+INTERNET+
+                         id_mun, data=table, x=TRUE, y=TRUE)
+
+
+benchmarkPRD.1.proximity <- lm( AMLOa ~ proximity*PRIstr*highTURNOUT+
+                        proximity*PRDstr*highTURNOUT+proximity*PANstr*highTURNOUT+     
+                         PRI09a+PRD09a+PAN09a+PART09+
+                         lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+                         EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+                         PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+                         PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+                         CAR+CELULAR+INTERNET+
+                         id_mun, data=table, x=TRUE, y=TRUE)
+
+
+benchmarkPAN.1.proximity <- lm( JVMa ~ proximity*PRIstr*highTURNOUT+proximity*PRDstr*highTURNOUT+proximity*PANstr*highTURNOUT+     
+                         PRI09a+PRD09a+PAN09a+PART09+
+                         lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+                         EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+                         PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+                         PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+                         CAR+CELULAR+INTERNET+
+                         id_mun, data=table, x=TRUE, y=TRUE)
+
+
+
+benchmarkPART.1.proximity <- lm( PART ~ proximity*PRIstr*highTURNOUT+proximity*PRDstr*highTURNOUT+proximity*PANstr*highTURNOUT+     
+                          PRI09a+PRD09a+PAN09a+PART09+
+                          lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+                          EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+                          PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+                          PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+                          CAR+CELULAR+INTERNET+
+                          id_mun, data=table, x=TRUE, y=TRUE)
+```
+
+Now with pure distance:
+```{r}
+benchmarkPRI.1.distance <- lm( EPNa ~ distance*PRIstr*highTURNOUT+
+                        distance*PRDstr*highTURNOUT+distance*PANstr*highTURNOUT+ 
+                         PRI09a+PRD09a+PAN09a+PART09+
+                         lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+                         EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+                         PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+                         PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+                         CAR+CELULAR+INTERNET+
+                         id_mun, data=table, x=TRUE, y=TRUE)
+
+
+#The same model but testing for other parties: 
+
+benchmarkPRD.1.distance <- lm( AMLOa ~ distance*PRIstr*highTURNOUT+
+                        distance*PRDstr*highTURNOUT+distance*PANstr*highTURNOUT+     
+                         PRI09a+PRD09a+PAN09a+PART09+
+                         lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+                         EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+                         PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+                         PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+                         CAR+CELULAR+INTERNET+
+                         id_mun, data=table, x=TRUE, y=TRUE)
+
+
+benchmarkPAN.1.distance <- lm( JVMa ~ distance*PRIstr*highTURNOUT+distance*PRDstr*highTURNOUT+distance*PANstr*highTURNOUT+     
+                         PRI09a+PRD09a+PAN09a+PART09+
+                         lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+                         EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+                         PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+                         PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+                         CAR+CELULAR+INTERNET+
+                         id_mun, data=table, x=TRUE, y=TRUE)
+
+
+
+benchmarkPART.1.distance <- lm( PART ~ distance*PRIstr*highTURNOUT+distance*PRDstr*highTURNOUT+distance*PANstr*highTURNOUT+     
+                          PRI09a+PRD09a+PAN09a+PART09+
+                          lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+                          EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+                          PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+                          PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+                          CAR+CELULAR+INTERNET+
+                          id_mun, data=table, x=TRUE, y=TRUE)
+
+```
+
+
+Making a quantile model:
+```{r}
+seq <- quantile(table$distance)
+seq[5] <- 20
+
+table$Distance.Quant <- cut(table$distance, breaks = seq)
+
+table$Distance.Quant <- as.factor(table$Distance.Quant)
+
+benchmarkPRI.1.Quantile <- lm( EPNa ~ Distance.Quant*PRIstr*highTURNOUT+
+                        Distance.Quant*PRDstr*highTURNOUT+Distance.Quant*PANstr*highTURNOUT+ 
+                         PRI09a+PRD09a+PAN09a+PART09+
+                         lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+                         EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+                         PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+                         PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+                         CAR+CELULAR+INTERNET+
+                         id_mun, data=table, x=TRUE, y=TRUE)
+
+
+#The same model but testing for other parties: 
+
+benchmarkPRD.1.Quantile <- lm(AMLOa ~ Distance.Quant*PRIstr*highTURNOUT+
+                        Distance.Quant*PRDstr*highTURNOUT+Distance.Quant*PANstr*highTURNOUT+     
+                         PRI09a+PRD09a+PAN09a+PART09+
+                         lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+                         EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+                         PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+                         PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+                         CAR+CELULAR+INTERNET+
+                         id_mun, data=table, x=TRUE, y=TRUE)
+
+
+benchmarkPAN.1.Quantile <- lm( JVMa ~ Distance.Quant*PRIstr*highTURNOUT+Distance.Quant*PRDstr*highTURNOUT+Distance.Quant*PANstr*highTURNOUT+     
+                         PRI09a+PRD09a+PAN09a+PART09+
+                         lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+                         EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+                         PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+                         PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+                         CAR+CELULAR+INTERNET+
+                         id_mun, data=table, x=TRUE, y=TRUE)
+
+
+
+benchmarkPART.1.Quantile <- lm( PART ~ Distance.Quant*PRIstr*highTURNOUT+Distance.Quant*PRDstr*highTURNOUT+Distance.Quant*PANstr*highTURNOUT+     
+                          PRI09a+PRD09a+PAN09a+PART09+
+                          lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+                          EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+                          PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+                          PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+                          CAR+CELULAR+INTERNET+
+                          id_mun, data=table, x=TRUE, y=TRUE)
+
+```
+
+Finally, a model with coarsened deciles:
+```{r}
+seq <- quantile(table$distance, prob = seq(0, 1, length = 11))
+
+seq[11] <- 20
+table$Distance.Decile <- cut(table$distance, breaks = seq)
+
+table$Distance.Decile <- as.factor(table$Distance.Decile)
+
+benchmarkPRI.1.Decile <- lm( EPNa ~ Distance.Decile*PRIstr*highTURNOUT+
+                        Distance.Decile*PRDstr*highTURNOUT+Distance.Decile*PANstr*highTURNOUT+ 
+                         PRI09a+PRD09a+PAN09a+PART09+
+                         lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+                         EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+                         PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+                         PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+                         CAR+CELULAR+INTERNET+
+                         id_mun, data=table, x=TRUE, y=TRUE)
+
+
+#The same model but testing for other parties: 
+
+benchmarkPRD.1.Decile <- lm(AMLOa ~ Distance.Decile*PRIstr*highTURNOUT+
+                        Distance.Decile*PRDstr*highTURNOUT+Distance.Decile*PANstr*highTURNOUT+     
+                         PRI09a+PRD09a+PAN09a+PART09+
+                         lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+                         EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+                         PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+                         PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+                         CAR+CELULAR+INTERNET+
+                         id_mun, data=table, x=TRUE, y=TRUE)
+
+
+benchmarkPAN.1.Decile <- lm( JVMa ~ Distance.Decile*PRIstr*highTURNOUT+Distance.Decile*PRDstr*highTURNOUT+Distance.Decile*PANstr*highTURNOUT+     
+                         PRI09a+PRD09a+PAN09a+PART09+
+                         lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+                         EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+                         PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+                         PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+                         CAR+CELULAR+INTERNET+
+                         id_mun, data=table, x=TRUE, y=TRUE)
+
+
+
+benchmarkPART.1.Decile <- lm( PART ~ Distance.Decile*PRIstr*highTURNOUT+Distance.Decile*PRDstr*highTURNOUT+Distance.Decile*PANstr*highTURNOUT+     
+                          PRI09a+PRD09a+PAN09a+PART09+
+                          lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+                          EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+                          PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+                          PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+                          CAR+CELULAR+INTERNET+
+                          id_mun, data=table, x=TRUE, y=TRUE)
+
+```
+
+Calculating RSEs for each model: 
+```{r}
+covBMprox <- cluster.vcov(benchmarkPRI.1.proximity, table$id_dist)
+covBMdist <- cluster.vcov(benchmarkPRI.1.distance, table$id_dist)
+covBMquantiles <- cluster.vcov(benchmarkPRI.1.Quantile, table$id_dist)
+covBMdeciles <- cluster.vcov(benchmarkPRI.1.Decile, table$id_dist)
+```
+
+### Table 1 - All Distance Models in Comparison - Including as an appendix but not in the text
+
+```{r}
+stargazer(coeftest(benchmarkPRI.1.proximity, covBMprox), coeftest(benchmarkPRI.1.distance, covBMdist), coeftest(benchmarkPRI.1.Quantile, covBMquantiles), coeftest(benchmarkPRI.1.Decile, covBMdeciles),style = "qje", star.cutoffs = c(0.05, 0.01, 0.001), type = "text", digits=3,
+          covariate.labels = c("Proximity", "PRI stronghold", "High Mobilization", "PRD stronghold","PAN stronghold", "PRI 2009", "PRD2009", "PAN2009", "Turnout 2009", "Population Log", "Population over 18 ",
+                               "Population over 65", "Area", "Density", "Indigenous","Catholic","Nonreligious","Education","College degree","Illiteracy","Inhabitants per house","Population in the labor market",
+                               "Female population in the labor market", "No insurance","Female head of household","Inhabitants per room", "Dirt floor", "All services", "No services", "Car", "Mobile phone", "Internet", "ACULCO" , "ALMOLOYA DE JUAREZ " , 
+                               "ALMOLOYA DEL RIO" , "AMANALCO" , "AMECAMECA" , "APAXCO" , "ATENCO" , "ATIZAPAN" , "ATIZAPAN DE ZARAGOZA" , "AXAPUSCO" , "AYAPANGO" , "CALIMAYA" , "CAPULHUAC" , "CHALCO" , "CHAPULTEPEC" ,
+                               "CHIAUTLA" , "CHICOLOAPAN" , "CHICONCUAC" , "CHIMALHUACAN" , "COACALCO DE BERRIOZABAL" , "COCOTITLAN" , "COYOTEPEC" , "CUAUTITLAN" , "CUAUTITLAN IZCALLI" , "ECATEPEC DE MORELOS" , "HUEHUETOCA",
+                               "HUEYPOXTLA" , "HUIXQUILUCAN" , "ISIDRO FABELA" , "IXTAPALUCA" , "IXTLAHUACA" , "JALTENCO" , "JILOTEPEC" , "JILOTZINGO" , "JIQUIPILCO" , "JOCOTITLAN" , "JOQUICINGO" , "JUCHITEPEC" , "LA PAZ" ,
+                               "LERMA" , "MELCHOR OCAMPO" , "METEPEC" , "MEXICALTZINGO" , "MORELOS" , "NAUCALPAN DE JUAREZ" , "NEXTLALPAN" , "NEZAHUALCOYOTL" , "NICOLAS ROMERO" , "OCOYOACAC" , "OCUILAN" , "OTUMBA" , 
+                               "OTZOLOTEPEC" , "PAPALOTLA" , "POLOTITLAN" , "RAYON" , "SAN ANTONIO LA ISLA" , "SAN FELIPE DEL PROGRESO" , "SAN MARTIN DE LAS PIRAMIDES" , "SAN MATEO ATENCO" , "SOYANIQUILPAN DE JUAREZ" , "TECAMAC" ,
+                               "TEMAMATLA" , "TEMASCALAPA" , "TEMOAYA" , "TENANGO DEL AIRE" , "TENANGO DEL VALLE" , "TEOLOYUCAN" , "TEOTIHUACAN" , "TEPETLAOXTOC" , "TEPOTZOTLAN" , "TEQUIXQUIAC" , "TEXCALYACAC" , "TEXCOCO" , "TEZOYUCA" ,
+                               "TIANGUISTENCO" , "TLALMANALCO" , "TLALNEPANTLA DE BAZ" , "TOLUCA" , "TONANITLA" , "TULTEPEC" , "TULTITLAN" , "VALLE DE CHALCO SOLIDARIDAD" , "VILLA DE ALLEND" , "VILLA DEL CARBON" , "VILLA VICTORIA" , 
+                               "XALATLACO" , "XONACATLAN" , "ZINACANTEPEC" , "ZUMPANGO" , "ALVARO OBREGON" , "AZCAPOTZALCO" , "BENITO JUAREZ" , "COYOACAN" , "CUAJIMALPA DE MORELOS" , "CUAUHTEMOC" , "GUSTAVO A. MADERO" , "IZTACALCO" , 
+                               "IZTAPALAPA" , "MAGDALENA CONTRERAS" , "MIGUEL HIDALGO" , "MILPA ALTA" , "TLAHUAC" , "TLALPAN" , "VENUSTIANO CARRANZA" , "XOCHIMILCO"))
+
+
+```
+
+
+Noting the lack of high turnout & PRD observations (basis of tables 1 & 2  in the paper) 
+```{r}
+table %>% filter(highTURNOUT == 1 & PRDstr == 1) -> subset
+nrow(subset)
+summary(subset$Distance.Quant)
+summary(subset$Distance.Decile)
+```
+
+
+# Figure 1
+Standard proximity 
+```{r}
+####Predicted vote shares in PRD Mobilized Strongholds
+
+g <- glm(EPNa ~ proximity*PRIstr*highTURNOUT+proximity*PRDstr*highTURNOUT+proximity*PANstr*highTURNOUT+     
+           PRI09a+PRD09a+PAN09a+PART09+
+           lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+           EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+           PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+           PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+           CAR+CELULAR+INTERNET+
+           id_mun, data=table, family = 'gaussian')
+
+at.prox <- seq(1/20, 1/2.5, 1/1000)
+marg<-marg(mod = g, var_interest = c("proximity"), type = 'levels', data=table[table$PRDstr==1 & table$highTURNOUT==1,],
+           at_var_interest = seq(1/20, 1/2.5, 1/1000),  cofint=.95)
+
+#getting confidence intervals for the expected PN turnout in PRD strongholds
+mean <- marg[[1]]$Margin
+upper <- marg[[1]]$'Lower CI (95%)'
+lower <- marg[[1]]$'Upper CI (95%)'
+
+dataPRI<-data.frame(cbind(at.prox, mean, upper, lower))
+dataPRI$distance<-(1/dataPRI$at.prox)
+
+
+#same for AMLO
+g <- glm(AMLOa ~ proximity*PRIstr*highTURNOUT+proximity*PRDstr*highTURNOUT+proximity*PANstr*highTURNOUT+     
+           PRI09a+PRD09a+PAN09a+PART09+
+           lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+           EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+           PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+           PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+           CAR+CELULAR+INTERNET+
+           id_mun, data=table, family = 'gaussian')
+
+marg<-marg(mod = g, var_interest = c("proximity"), type = 'levels', data=table[table$PRDstr==1 & table$highTURNOUT==1,],
+           at_var_interest = seq(1/20, 1/2.5, 1/1000), cofint=.95)
+
+mean <- marg[[1]]$Margin
+upper <- marg[[1]]$'Lower CI (95%)'
+lower <- marg[[1]]$'Upper CI (95%)'
+
+dataPRD<-data.frame(cbind(at.prox, mean, upper, lower))
+dataPRD$distance<-(1/dataPRD$at.prox)
+
+
+g <- glm(JVMa ~ proximity*PRIstr*highTURNOUT+proximity*PRDstr*highTURNOUT+proximity*PANstr*highTURNOUT+     
+           PRI09a+PRD09a+PAN09a+PART09+
+           lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+           EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+           PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+           PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+           CAR+CELULAR+INTERNET+
+           id_mun, data=table, family = 'gaussian')
+
+marg<-marg(mod = g, var_interest = c("proximity"), 
+           type = 'levels', data=table[table$PRDstr==1 & table$highTURNOUT==1,],
+           at_var_interest = seq(1/20, 1/2.5, 1/1000),cofint=.95)
+
+mean <- marg[[1]]$Margin
+upper <- marg[[1]]$'Lower CI (95%)'
+lower <- marg[[1]]$'Upper CI (95%)'
+
+dataPAN<-data.frame(cbind(at.prox, mean, upper, lower))
+dataPAN$distance<-(1/dataPAN$at.prox)
+
+datasim<-data.frame(rbind(dataPRI, dataPRD, dataPAN))
+
+datasim$dv<-NA
+datasim$dv[1:351]<-"Pena Nieto" # Chengyu: I have to change the name to Pena
+datasim$dv[352:702]<-"López Obrador"
+datasim$dv[703:1053]<-"Vázquez Mota"
+```
+
+
+```{r}
+originalprox <- ggplot()+
+  geom_line(data=datasim, aes(x=distance, y=mean,  linetype=dv))+
+  geom_ribbon(data=datasim, aes(x=distance,  ymin=lower, 
+                      ymax=upper, fill=dv),  alpha=0.5)+theme_bw()+
+  ylab("Predicted vote shares (%)") +
+  xlab("Distance to Soriana (km)")+xlim(2.5,20)+ylim(0,50)+ 
+  ggtitle("Original Author Plot - Proximity") +
+  scale_fill_manual(values = c("#F0E442","red", "deepskyblue2"), name="")+
+  scale_linetype_manual(values=c("solid", "longdash","dotted"), name="" )+
+  theme(axis.text=element_text(size= 12),
+        axis.title=element_text(size= 12),
+        legend.text = element_text(size = 12),
+        plot.title = element_text(hjust = 0.5))
+
+ggsave("originalprox.jpg")
+```
+
+
+## Distance plot
+```{r}
+####Predicted vote shares in PRD Mobilized Strongholds
+
+g <- glm(EPNa ~ distance*PRIstr*highTURNOUT+distance*PRDstr*highTURNOUT+distance*PANstr*highTURNOUT+     
+           PRI09a+PRD09a+PAN09a+PART09+
+           lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+           EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+           PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+           PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+           CAR+CELULAR+INTERNET+
+           id_mun, data=table, family = 'gaussian')
+
+at.dist <- seq(0, 20, .5)
+marg<-marg(mod = g, var_interest = c("distance"), type = 'levels', data=table[table$PRDstr==1 & table$highTURNOUT==1,],
+           at_var_interest = seq(0, 20, by = .5),  cofint=.95)
+
+#getting confidence intervals for the expected PN turnout in PRD strongholds
+mean <- marg[[1]]$Margin
+upper <- marg[[1]]$'Lower CI (95%)'
+lower <- marg[[1]]$'Upper CI (95%)'
+
+dataPRI<-data.frame(cbind(at.dist, mean, upper, lower))
+
+
+#same for AMLO
+g <- glm(AMLOa ~ distance*PRIstr*highTURNOUT+distance*PRDstr*highTURNOUT+distance*PANstr*highTURNOUT+     
+           PRI09a+PRD09a+PAN09a+PART09+
+           lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+           EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+           PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+           PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+           CAR+CELULAR+INTERNET+
+           id_mun, data=table, family = 'gaussian')
+
+marg<-marg(mod = g, var_interest = c("distance"), type = 'levels', data=table[table$PRDstr==1 & table$highTURNOUT==1,],
+           at_var_interest = seq(0, 20, by = .5), cofint=.95)
+
+mean <- marg[[1]]$Margin
+upper <- marg[[1]]$'Lower CI (95%)'
+lower <- marg[[1]]$'Upper CI (95%)'
+
+dataPRD<-data.frame(cbind(at.dist, mean, upper, lower))
+
+
+g <- glm(JVMa ~ distance*PRIstr*highTURNOUT+distance*PRDstr*highTURNOUT+distance*PANstr*highTURNOUT+     
+           PRI09a+PRD09a+PAN09a+PART09+
+           lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+           EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+           PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+           PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+           CAR+CELULAR+INTERNET+
+           id_mun, data=table, family = 'gaussian')
+
+marg<-marg(mod = g, var_interest = c("distance"), 
+           type = 'levels', data=table[table$PRDstr==1 & table$highTURNOUT==1,],
+           at_var_interest = seq(0, 20, by = .5),cofint=.95)
+
+mean <- marg[[1]]$Margin
+upper <- marg[[1]]$'Lower CI (95%)'
+lower <- marg[[1]]$'Upper CI (95%)'
+
+dataPAN<-data.frame(cbind(at.dist, mean, upper, lower))
+
+datasim<-data.frame(rbind(dataPRI, dataPRD, dataPAN))
+```
+
+
+```{r}
+datasim$dv<-NA
+datasim$dv[1:41]<-"Pena Nieto"
+datasim$dv[42:82]<-"López Obrador"
+datasim$dv[83:123]<-"Vázquez Mota"
+```
+
+
+```{r}
+distance <- ggplot()+
+  geom_line(data=datasim, aes(x=at.dist, y=mean,  linetype=dv))+
+  geom_ribbon(data=datasim, aes(x=at.dist,  ymin=lower, 
+                      ymax=upper, fill=dv),  alpha=0.5)+theme_bw()+
+  ylab("Predicted vote shares (%)")+ 
+  ggtitle("Pure Distance") +
+  xlab("Distance to Soriana (km)")+xlim(2.5, 20)+ylim(0,50)+ 
+ scale_fill_manual(values = c("#F0E442","red", "deepskyblue2"), name="")+
+  scale_linetype_manual(values=c("solid", "longdash","dotted"), name="" )+
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=12),
+        legend.text = element_text(size = 12),
+        plot.title = element_text(hjust = .5))
+
+ggsave("distance.jpg")
+```
+
+
+So, the `PRDstr*highTURNOUT` interaction is creating near multicollinearity here.  We removed the `Distance*highTurnout*PRDstr` interaction for now, as we cannot estimate the models with this problem.
+
+###For the Quantiles
+
+```{r}
+####Predicted vote shares in PRD Mobilized Strongholds
+
+g <- glm(EPNa ~ Distance.Quant*PRIstr*highTURNOUT+Distance.Quant*PANstr*highTURNOUT+PRDstr+
+           PRI09a+PRD09a+PAN09a+PART09+
+           lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+           EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+           PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+           PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+           CAR+CELULAR+INTERNET+
+           id_mun, data=table, family = 'gaussian')
+
+marg<-marg(mod = g, var_interest = c("Distance.Quant"), type = 'levels', data=table[table$PRDstr==1 & table$highTURNOUT==1,])
+
+#getting confidence intervals for the expected PN turnout in PRD strongholds
+mean <- marg[[1]]$Margin
+upper <- marg[[1]]$'Lower CI (95%)'
+lower <- marg[[1]]$'Upper CI (95%)'
+
+seq <- as.numeric(quantile(table$distance)[-1])
+seq[4] <- 20
+dataPRI<-data.frame(cbind(seq, mean, upper, lower))
+
+#same for AMLO
+g <- glm(AMLOa ~ Distance.Quant*PRIstr*highTURNOUT+Distance.Quant*PANstr*highTURNOUT+PRDstr+
+           PRI09a+PRD09a+PAN09a+PART09+
+           lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+           EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+           PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+           PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+           CAR+CELULAR+INTERNET+
+           id_mun, data=table, family = 'gaussian')
+
+marg<-marg(mod = g, var_interest = c("Distance.Quant"), type = 'levels', data=table[table$PRDstr==1 & table$highTURNOUT==1,])
+
+mean <- marg[[1]]$Margin
+upper <- marg[[1]]$'Lower CI (95%)'
+lower <- marg[[1]]$'Upper CI (95%)'
+
+
+seq <- as.numeric(quantile(table$distance)[-1])
+seq[4] <- 20
+dataPRD<-data.frame(cbind(seq, mean, upper, lower))
+
+
+g <- glm(JVMa ~ Distance.Quant*PRIstr*highTURNOUT+PRDstr+Distance.Quant*PANstr*highTURNOUT+PRDstr+     
+           PRI09a+PRD09a+PAN09a+PART09+
+           lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+           EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+           PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+           PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+           CAR+CELULAR+INTERNET+
+           id_mun, data=table, family = 'gaussian')
+
+marg<-marg(mod = g, var_interest = c("Distance.Quant"), type = 'levels', data=table[table$PRDstr==1 & table$highTURNOUT==1,])
+
+mean <- marg[[1]]$Margin
+upper <- marg[[1]]$'Lower CI (95%)'
+lower <- marg[[1]]$'Upper CI (95%)'
+
+
+seq <- as.numeric(quantile(table$distance)[-1])
+seq[4] <- 20
+dataPAN<-data.frame(cbind(seq, mean, upper, lower))
+
+
+datasim<-data.frame(rbind(dataPRI, dataPRD, dataPAN))
+
+datasim$dv<-NA
+datasim$dv[1:4]<-"Pena Nieto"
+datasim$dv[5:8]<-"López Obrador"
+datasim$dv[9:12]<-"Vázquez Mota"
+```
+
+
+```{r}
+datasim %>%
+ggplot()+
+  geom_line(aes(x=seq, y=mean,  linetype=dv))+
+ geom_ribbon(aes(x= as.numeric(seq),  ymin= lower,  ymax= upper, fill= dv),  alpha=0.5)+theme_bw()+
+  ylab("Predicted vote shares (%)")+
+  ggtitle("Coarsened Quantiles") +
+  xlab("Distance to Soriana (km)")+xlim(1.5, 20)+ylim(0,50)+ 
+  scale_fill_manual(values = c("#F0E442","red", "deepskyblue2"), name="")+
+  scale_linetype_manual(values=c("solid", "longdash","dotted"), name="" )+
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=12),
+        legend.text = element_text(size = 12),
+        plot.title = element_text(hjust = .5)) -> quantiles
+
+ggsave("quantiles.jpg")
+```
+
+
+###For the Deciles
+
+```{r}
+####Predicted vote shares in PRD Mobilized Strongholds
+
+g <- glm(EPNa ~ Distance.Decile*PRIstr*highTURNOUT+Distance.Decile*PANstr+PRDstr+
+           PRI09a+PRD09a+PAN09a+PART09+
+           lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+           EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+           PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+           PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+           CAR+CELULAR+INTERNET+
+           id_mun, data=table, family = 'gaussian')
+
+marg<-marg(mod = g, var_interest = c("Distance.Decile"), type = 'levels', data=table[table$PRDstr==1 & table$highTURNOUT==1,])
+
+#getting confidence intervals for the expected PN turnout in PRD strongholds
+mean <- marg[[1]]$Margin
+upper <- marg[[1]]$'Lower CI (95%)'
+lower <- marg[[1]]$'Upper CI (95%)'
+
+seq <- as.numeric(quantile(table$distance)[-1])
+
+seq <- quantile(table$distance, prob = seq(0, 1, length = 11))
+seq <- seq[-1]
+seq[10] <- 20
+table$Distance.Decile <- cut(table$distance, breaks = seq)
+
+dataPRI<-data.frame(cbind(seq, mean, upper, lower))
+
+#same for AMLO
+g <- glm(AMLOa ~ Distance.Decile*PRIstr*highTURNOUT+Distance.Decile*PANstr+PRDstr+
+           PRI09a+PRD09a+PAN09a+PART09+
+           lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+           EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+           PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+           PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+           CAR+CELULAR+INTERNET+
+           id_mun, data=table, family = 'gaussian')
+
+marg<-marg(mod = g, var_interest = c("Distance.Decile"), type = 'levels', data=table[table$PRDstr==1 & table$highTURNOUT==1,])
+
+mean <- marg[[1]]$Margin
+upper <- marg[[1]]$'Lower CI (95%)'
+lower <- marg[[1]]$'Upper CI (95%)'
+
+
+seq <- quantile(table$distance, prob = seq(0, 1, length = 11))
+seq <- seq[-1]
+seq[10] <- 20
+dataPRD<-data.frame(cbind(seq, mean, upper, lower))
+
+
+g <- glm(JVMa ~ Distance.Decile*PRIstr*highTURNOUT+PRDstr+Distance.Decile*PANstr+PRDstr+     
+           PRI09a+PRD09a+PAN09a+PART09+
+           lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+           EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+           PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+           PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+           CAR+CELULAR+INTERNET+
+           id_mun, data=table, family = 'gaussian')
+
+marg<-marg(mod = g, var_interest = c("Distance.Decile"), type = 'levels', data=table[table$PRDstr==1 & table$highTURNOUT==1,])
+
+mean <- marg[[1]]$Margin
+upper <- marg[[1]]$'Lower CI (95%)'
+lower <- marg[[1]]$'Upper CI (95%)'
+
+seq <- quantile(table$distance, prob = seq(0, 1, length = 11))
+seq <- seq[-1]
+seq[10] <- 20
+dataPAN<-data.frame(cbind(seq, mean, upper, lower))
+
+datasim<-data.frame(rbind(dataPRI, dataPRD, dataPAN))
+```
+
+
+```{r}
+datasim$dv<-NA
+datasim$dv[1:10]<-"Pena Nieto"
+datasim$dv[11:20]<-"López Obrador"
+datasim$dv[21:30]<-"Vázquez Mota"
+```
+
+
+```{r}
+datasim %>%
+ggplot()+
+  geom_line(aes(x=seq, y=mean,  linetype=dv))+
+ geom_ribbon(aes(x= as.numeric(seq),  ymin= lower,  ymax= upper, fill= dv),  alpha=0.5)+theme_bw()+
+  ylab("Predicted vote shares (%)")+
+  xlab("Distance to Soriana (km)")+xlim(1, 20)+ylim(0,50)+ 
+  ggtitle("Coarsened Deciles") +
+  scale_fill_manual(values = c("#F0E442","red", "deepskyblue2"), name="")+
+  scale_linetype_manual(values=c("solid", "longdash","dotted"), name="" )+
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=12),
+        legend.text = element_text(size = 12),
+        plot.title = element_text(hjust = .5)) -> deciles
+
+ggsave("deciles.jpg")
+```
+
+# Figure 2 
+```{r}
+tail(coeftest(benchmarkPRI.1.proximity, vcov = vcovHC(benchmarkPRI.1.proximity, type="HC1")))
+tail(coeftest(benchmarkPRI.1.proximity))
+
+tail(coeftest(benchmarkPRI.1.distance, vcov = vcovHC(benchmarkPRI.1.distance,type="HC1")))
+tail(coeftest(benchmarkPRI.1.distance))
+
+tail(coeftest(benchmarkPRI.1.Quantile, vcov = vcovHC(benchmarkPRI.1.Quantile,type="HC1")), n = 30)
+tail(coeftest(benchmarkPRI.1.Quantile), n = 30)
+
+
+tail(coeftest(benchmarkPRI.1.Decile, vcov = vcovHC(benchmarkPRI.1.Decile,type="HC1")), n = 50)
+tail(coeftest(benchmarkPRI.1.Decile), n = 50)
+```
+
+Plotting Standard Errors for Turnout/Distance/PRD Stronghold interaction term: 
+```{r}
+model <- c("Proximity", "Distance", "Quantile [2.56, 4.78)", "Decile(2.57, 3.12]")
+RSE <- as.numeric(c(8.7923, 0.02712359,0.7134083, 2.8442492))
+CSE <- as.numeric(c(6.6196123, 0.01653587, 3.0606704, 3.6399181))
+coefficient <- as.numeric(c(17.2593617, -0.049846400, 2.85526845, 4.203151))
+upperRSE <- coefficient + (1.96*RSE)
+lowerRSE <- coefficient - (1.96*RSE)
+upperCSE <- coefficient + (1.96*CSE)
+lowerCSE <- coefficient - (1.96*CSE)
+
+
+
+
+df <- as.data.frame(cbind(model, RSE, CSE, coefficient, upperRSE, lowerRSE, upperCSE, lowerCSE))
+df$RSE <- as.numeric(df$RSE)
+df$CSE <- as.numeric(df$CSE)
+df$coefficient <- as.numeric(df$coefficient)
+df$upperRSE <- as.numeric(df$upperRSE)
+df$lowerRSE <- as.numeric(df$lowerRSE)
+df$upperCSE <- as.numeric(df$upperCSE)
+df$lowerCSE <- as.numeric(df$lowerCSE)
+
+df <- pivot_longer(df, cols = 2:3)
+df$sampleNum <- 1:8
+```
+
+
+```{r}
+df %>%
+  ggplot(aes(x = coefficient, y = model)) +
+  geom_point(aes(x = coefficient)) +
+  geom_errorbarh(aes(xmin=lowerRSE,xmax=upperRSE, color = "red")) + 
+  geom_errorbarh(aes(xmin=lowerCSE,xmax=upperCSE, color = "blue")) + 
+  scale_color_discrete(name = "Legend", labels = c("Classical", "Robust")) +
+ xlab("Coefficient") +
+  ggtitle("High Proximity*Distance Measure*PRD Stronghold Estimates") +
+  ylab("Model") +
+  labs(caption = "Using smallest quantile & decile coefficient for which there were estimates, given multicollinearity problem.") -> se.plot
+    
+se.plot
+
+ggsave("se.plot.jpg", height = 5, width = 7)
+```
+
+
+# Figure 3
+
+```{r data_figure_1}
+
+base <- read_stata("./rawdata/Base nacional de la ENVUD para trabajar por estado.dta")
+
+base_2 <- base[base$estado == 9 | base$estado == 15,]
+
+base_2$sectionID <- paste(base_2$estado, base_2$seccion, sep = " _ ")
+
+precinct <- read_stata("./rawdata/precinctdata.dta")
+
+base_3 <- merge(base_2, precinct, by = "sectionID")
+
+base_3$gender <- base_3$genero
+base_3$age <- base_3$edad
+base_3$sec <- base_3$P15
+
+base_3[base_3$sec==0,]$sec <- 0.6
+
+#30b.- (SI DICE SÍ) ¿A cuántos grupos u organizaciones de ese tipo pertenece usted? (ANOTAR EL NUMERO DIRECTO; 0=NINGUNO; 99=NS/NC)
+base_3$belongparty <- base_3$'P30_4'
+base_3$belongunion <- base_3$'P30_5'
+base_3$belongreligiousgroup <- base_3$'P30_7'
+
+base_3[base_3$belongparty==0,]$belongparty <- NA
+base_3[base_3$belongunion==0,]$belongunion <- NA
+base_3[base_3$belongreligiousgroup==0,]$belongreligiousgroup <- NA
+
+base_3[base_3$belongparty %in% 2,]$belongparty <- 0
+base_3[base_3$belongunion %in% 2,]$belongunion <- 0
+base_3[base_3$belongreligiousgroup %in% 2,]$belongreligiousgroup <- 0
+
+#44.- (TARJETA 11) En una escala del 1 al 10, donde 1 significa “nada” y 10 “mucho”. ¿A usted...? (LEER) (0=NS/NC)
+#a. Cuánto le interesa la política
+base_3$interestpolitics <- base_3$P44_1
+#c. Cuánto participa usted en las elecciones
+base_3$interestelections <- base_3$P44_2
+#e. Cuánto habla usted de asuntos políticos con otras personas
+base_3$discusspolitics <- base_3$P44_5
+#d. Cuánto sigue las noticias sobre política y gobierno
+base_3$follownews <- base_3$P44_4
+
+#54.- En general, ¿usted aprueba o desaprueba la forma como está haciendo su trabajo...? (1= Aprueba; 2=Desaprueba; 0=NS/NC)
+base_3$presidentialapp <- base_3$P54_1
+base_3$govapp <- base_3$P54_2
+base_3$congressapp <- base_3$P54_4
+
+base_3[base_3$presidentialapp==0,]$presidentialapp <- NA
+base_3[base_3$govapp==0,]$govapp <- NA
+base_3[base_3$congressapp==0,]$congressapp <- NA
+
+base_3[base_3$presidentialapp %in% 2,]$presidentialapp <- 0
+base_3[base_3$govapp %in% 2,]$govapp <- 0
+base_3[base_3$congressapp %in% 2,]$congressapp <- 0
+
+#87.- Generalmente, ¿usted se considera priísta, panista o perredista? (INSISTIR) ¿Muy (PRIISTA / PANISTA / PERREDISTA) o algo (PRIISTA / PANISTA /PERREDISTA)? (NS/NC=0)
+base_3$partyid <- base_3$P87
+base_3$pri <- ifelse(base_3$partyid == 1 | base_3$partyid == 2, 1, 0)
+base_3$pan <- ifelse(base_3$partyid == 3 | base_3$partyid == 4, 1, 0)
+base_3$prd <- ifelse(base_3$partyid == 5 | base_3$partyid == 6, 1, 0)
+
+base_3$partyid <- ifelse(base_3$P87 == 1 | base_3$P87 == 2, 1, ifelse(base_3$P87 == 3 | base_3$P87 == 4, 2, ifelse(base_3$P87 == 5 | base_3$P87 == 6, 3, 0)))
+
+base_3$education <-  ifelse(base_3$P104 == 1, 0, ifelse(base_3$P104 == 2, 1, ifelse(base_3$P104 == 3, 2, ifelse(base_3$P104 == 4 | base_3$P104 == 5, 3, ifelse(base_3$P104 == 6 | base_3$P104 == 7, 4, ifelse(base_3$P104 == 8, 5, ifelse(base_3$P104 == 9, 6, NA)))))))
+
+base_3$cellphone <-  ifelse(base_3$P112_2 == 3, NA, base_3$P112_2)
+
+base_3$internet <-  ifelse(base_3$P112_3 == 3, NA, base_3$P112_3)
+
+# Consider replicate by distance, not prox
+base_3$prox <- 1/base_3$distance
+
+base_3$munID <- as.numeric(paste(base_3$estado, base_3$municipio, sep = ""))
+
+```
+
+```{r original_figure_1}
+
+# I use multinom from nnet here
+# Is constant term needed?
+m1_3_multinom <- multinom(partyid ~ prox+edad+gender+education+sec+cellphone+internet+localidae, data = base_3)
+
+summary(m1_3_multinom)
+
+formula_presi <- presidentialapp ~ prox+edad+gender+education+sec+cellphone+internet+localidae
+m4_presi <- glm(formula_presi, data = base_3, family = "binomial")
+
+summary(m4_presi)
+
+formula_gov <- govapp ~ prox+edad+gender+education+sec+cellphone+internet+localidae
+m5_gov <- glm(formula_gov, data = base_3, family = "binomial")
+
+summary(m5_gov)
+
+formula_congress <- congressapp ~ prox+edad+gender+education+sec+cellphone+internet+localidae
+m6_congress <- glm(formula_congress, data = base_3, family = "binomial")
+
+summary(m6_congress)
+
+# Seemingly Unrelated Regression by systemfit
+# which result to trust, single regress or SUR?
+
+sur_part1 <- systemfit(list(presi = formula_presi, gov = formula_gov, congress = formula_congress), method = "SUR", data = base_3)
+
+summary(sur_part1)
+
+formula_party <- belongparty ~ prox+edad+gender+education+sec+cellphone+internet+localidae
+m7_party <- glm(formula_party, data = base_3, family = "binomial")
+
+summary(m7_party)
+
+formula_union <- belongunion ~ prox+edad+gender+education+sec+cellphone+internet+localidae
+m8_union <- glm(formula_union, data = base_3, family = "binomial")
+
+summary(m8_union)
+
+formula_reli <- belongreligiousgroup ~ prox+edad+gender+education+sec+cellphone+internet+localidae
+m9_reli <- glm(formula_reli, data = base_3, family = "binomial")
+
+summary(m9_reli)
+
+# Seemingly Unrelated Regression by systemfit
+# which result to trust, single regress or SUR?
+
+sur_part2 <- systemfit(list(party = formula_party, union = formula_union, reli = formula_reli), data = base_3)
+
+summary(sur_part2)
+
+# The last four formula are purely estimated by SUR
+# Maybe replicate by regressing all formula separately?
+
+formula_interestpoli <- interestpolitics ~ prox+edad+gender+education+sec+cellphone+internet+localidae
+
+formula_interestelec <- interestelections ~ prox+edad+gender+education+sec+cellphone+internet+localidae
+
+formula_discuss <- discusspolitics ~ prox+edad+gender+education+sec+cellphone+internet+localidae
+
+formula_follow <- follownews ~ prox+edad+gender+education+sec+cellphone+internet+localidae
+
+sur_part3 <- systemfit(list(interestpoli = formula_interestpoli, interestelec = formula_interestelec, discuss = formula_discuss, follow = formula_follow), data = base_3)
+
+summary(sur_part3)
+
+```
+
+I rewrite the Stata code to R here, and compare the results in R, Stata, and in the paper. 
+
+First, for the binomial and multinomial models (i.e., models starting with "m"), the R and Stata replication results are generally the same.
+
+Second, the coefficients for "prox" in the replications' binomial and multinomial models are slightly different from those in the original paper. For instance, the coefficients for party IDs (i.e., the first three lines) are -0.053, 0.013, and -0.102 in Table B.2 in the paper's appendix. However, R and Stata replication generates -0.055, 0.019, and -0.102 separately. 
+
+Third, the significance of the Figure 1's results generally remain the same in replications.
+
+Fourth, the Seemingly Unrelated Regression (SUR) results are quite different in R and Stata. Although still non-significant, the coefficients differ a lot. I attach all coefficients (in the paper and in the R replication) below.
+
+```{r graph_figure_1}
+
+results <- read.table(header=T, con <- textConnection('
+IV	Coefficient	StdError Coef_repli SE_repli	Model	Included	Variable Order
+Proximity	-0.052	0.100	-0.055 0.101 1	1	PRI 13
+Proximity  0.013	0.127	0.019 0.127 1	1	PAN 12
+Proximity  -0.102  0.140	-0.102 0.141 1	1	PRD 11
+Proximity  0.074	0.071	0.018 0.017 2	1	"President\'s Approval" 10
+Proximity  -0.090	0.074	-0.023 0.017 2	1	"Governor\'s Approval" 9
+Proximity  -0.039  0.073	0.008 0.016 2	1	"Congress\'s Approval" 8
+Proximity  -0.546  0.398	-0.004 0.005 3	1	"Party Member" 7
+Proximity  -0.047	0.147	-0.001 0.005 3	1	"Union Member" 6
+Proximity  0.055  0.145	0.002 0.008 3	1	"Religious group member" 5
+Proximity  -0.017  0.086  -0.015 0.086 4	1	"Interest in politics" 4
+Proximity  -0.087	0.078	-0.081 0.079 4	1	"Interest in elections" 3
+Proximity  0.105 0.080	0.109 0.081 4	1	"Talks about politics" 2
+Proximity  0.014  0.085  0.015 0.085 4	1	"Follows news" 1
+'))
+close(con)
+
+results$min<-results$Coefficient-(1.96*results$StdError)
+results$max<-results$Coefficient+(1.96*results$StdError)
+results$Color[results$Included==1]<-"black"
+results$Color[results$Included==0]<-"white"
+
+results$Model[results$Model==1]<-"1. Party ID"
+results$Model[results$Model==2]<-"2. Approval"
+results$Model[results$Model==3]<-"3. Membership"
+results$Model[results$Model==4]<-"4. Political Awareness"
+
+results$Variable <- factor(results$Variable, levels=results$Variable[order(results$Order)])
+
+results$min_repli<-results$Coef_repli-(1.96*results$SE_repli)
+results$max_repli<-results$Coef_repli+(1.96*results$SE_repli)
+
+# a is the figure 1 with original data; I am still trying to combine them into one # so that comparison is possible
+a<-ggplot(results, aes(y=reorder(Variable, Order), x = Coefficient)) +
+#  scale_colour_gradient(low="white", high="black")+
+  geom_point(size=3) +
+  facet_grid( ~ Model)+
+  geom_errorbarh(aes(xmin=min, xmax=max)) +
+  geom_vline(xintercept = 0, linetype=2, color="red") +
+  labs( x = "Coefficients", y = "Variable") +
+  theme_bw()+
+  theme(
+    axis.title.x = element_text(face="bold", size=18),
+    axis.title.y = element_text(face="bold", size=18, angle=90),
+    axis.text.x  = element_text( size=16),
+    strip.text.x = element_text(size=16),
+    axis.text.y  = element_text( size=18),
+    plot.title = element_text(hjust = 0.5)) +
+  ggtitle("Proximity Measure in Original Paper")
+
+a
+
+# b is the figure 1 with replicated data
+b<-ggplot(results, aes(y=reorder(Variable, Order), x = Coef_repli)) +
+#  scale_colour_gradient(low="white", high="black")+
+  geom_point(size=3) +
+  facet_grid( ~ Model)+
+  geom_errorbarh(aes(xmin=min_repli, xmax=max_repli))+
+  geom_vline(xintercept = 0, linetype=2, color="red") +
+  labs( x = "Coefficients", y = "Variable") +
+  theme_bw()+
+  theme(
+    axis.title.x = element_text(face="bold", size=18),
+    axis.title.y = element_text(face="bold", size=18, angle=90),
+    axis.text.x  = element_text( size=16),
+    strip.text.x = element_text(size=16),
+    axis.text.y  = element_text( size=18),
+    plot.title = element_text(hjust = 0.5)) +
+  ggtitle("Proximity Measure Replication")
+
+b
+
+```
+
+```{r model_figure_1_distance}
+
+# In this chunk I use distance instead of prox, and the new one for Figure 1 is presented as "c"
+m1_3_multinom_dis <- multinom(partyid ~ distance+edad+gender+education+sec+cellphone+internet+localidae, data = base_3)
+
+summary(m1_3_multinom_dis)
+
+formula_presi_dis <- presidentialapp ~ distance+edad+gender+education+sec+cellphone+internet+localidae
+m4_presi_dis <- glm(formula_presi_dis, data = base_3, family = "binomial")
+
+summary(m4_presi_dis)
+
+formula_gov_dis <- govapp ~ distance+edad+gender+education+sec+cellphone+internet+localidae
+m5_gov_dis <- glm(formula_gov_dis, data = base_3, family = "binomial")
+
+summary(m5_gov_dis)
+
+formula_congress_dis <- congressapp ~ distance+edad+gender+education+sec+cellphone+internet+localidae
+m6_congress_dis <- glm(formula_congress_dis, data = base_3, family = "binomial")
+
+summary(m6_congress_dis)
+
+# Seemingly Unrelated Regression by systemfit
+# which result to trust, single regress or SUR?
+
+sur_part1_dis <- systemfit(list(presi = formula_presi_dis, gov = formula_gov_dis, congress = formula_congress_dis), method = "SUR", data = base_3)
+
+summary(sur_part1_dis)
+
+formula_party_dis <- belongparty ~ distance+edad+gender+education+sec+cellphone+internet+localidae
+m7_party_dis <- glm(formula_party_dis, data = base_3, family = "binomial")
+
+summary(m7_party_dis)
+
+formula_union_dis <- belongunion ~ distance+edad+gender+education+sec+cellphone+internet+localidae
+m8_union_dis <- glm(formula_union_dis, data = base_3, family = "binomial")
+
+summary(m8_union_dis)
+
+formula_reli_dis <- belongreligiousgroup ~ distance+edad+gender+education+sec+cellphone+internet+localidae
+m9_reli_dis <- glm(formula_reli_dis, data = base_3, family = "binomial")
+
+summary(m9_reli_dis)
+
+# Seemingly Unrelated Regression by systemfit
+# which result to trust, single regress or SUR?
+
+sur_part2_dis <- systemfit(list(party = formula_party_dis, union = formula_union_dis, reli = formula_reli_dis), data = base_3)
+
+summary(sur_part2_dis)
+
+# The last four formula are purely estimated by SUR
+# Maybe replicate by regressing all formula separately?
+
+formula_interestpoli_dis <- interestpolitics ~ distance+edad+gender+education+sec+cellphone+internet+localidae
+
+formula_interestelec_dis <- interestelections ~ distance+edad+gender+education+sec+cellphone+internet+localidae
+
+formula_discuss_dis <- discusspolitics ~ distance+edad+gender+education+sec+cellphone+internet+localidae
+
+formula_follow_dis <- follownews ~ distance+edad+gender+education+sec+cellphone+internet+localidae
+
+sur_part3_dis <- systemfit(list(interestpoli = formula_interestpoli_dis, interestelec = formula_interestelec_dis, discuss = formula_discuss_dis, follow = formula_follow_dis), data = base_3)
+
+summary(sur_part3_dis)
+
+```
+
+```{r distance_figure_1}
+
+results_distance <- read.table(header=T, con <- textConnection('
+IV	Coef_dist	SE_dist Model	Included	Variable Order
+Distance	0.015	0.011	1	1	PRI 13
+Distance  -0.027	0.028	1	1	PAN 12
+Distance  0.004  0.018 1	1	PRD 11
+Distance  0.004	0.002	2	1	"President\'s Approval" 10
+Distance  0.043	0.0023	2	1	"Governor\'s Approval" 9
+Distance  -0.001  0.002 2	1	"Congress\'s Approval" 8
+Distance  -0.0001  0.0006 3	1	"Party Member" 7
+Distance  -0.0004	0.0006 3	1	"Union Member" 6
+Distance  0.0007  0.001 3	1	"Religious group member" 5
+Distance  -0.026  0.011 4	1	"Interest in politics" 4
+Distance  0.018	0.011 4	1	"Interest in elections" 3
+Distance  -0.036 0.011 4	1	"Talks about politics" 2
+Distance  -0.011  0.011 4	1	"Follows news" 1
+'))
+close(con)
+
+results_distance$min_dist<-results_distance$Coef_dist-(1.96*results_distance$SE_dist)
+results_distance$max_dist<-results_distance$Coef_dist+(1.96*results_distance$SE_dist)
+results_distance$Color[results_distance$Included==1]<-"black"
+results_distance$Color[results_distance$Included==0]<-"white"
+
+results_distance$Model[results_distance$Model==1]<-"1. Party ID"
+results_distance$Model[results_distance$Model==2]<-"2. Approval"
+results_distance$Model[results_distance$Model==3]<-"3. Membership"
+results_distance$Model[results_distance$Model==4]<-"4. Political Awareness"
+
+results_distance$Variable <- factor(results_distance$Variable, levels=results_distance$Variable[order(results_distance$Order)])
+
+# c is the figure 1 with distance instead of prox; I am still trying to combine them into one so that comparison is possible
+c<-ggplot(results_distance, aes(y=reorder(Variable, Order), x = Coef_dist)) +
+#  scale_colour_gradient(low="white", high="black")+
+  geom_point(size=3) +
+  facet_grid( ~ Model)+
+  geom_errorbarh(aes(xmin=min_dist, xmax=max_dist)) +
+  geom_vline(xintercept = 0, linetype=2, color="red") +
+  labs( x = "Coefficients", y = "Variable") +
+  theme_bw()+
+  theme(
+    axis.title.x = element_text(face="bold", size=18),
+    axis.title.y = element_text(face="bold", size=18, angle=90),
+    axis.text.x  = element_text( size=16),
+    strip.text.x = element_text(size=16),
+    axis.text.y  = element_text( size=18),
+    plot.title = element_text(hjust = 0.5)) +
+  ggtitle("Distance Measure (Original Form)")
+
+c
+
+```
+
+```{r model_figure_1_distance_quant}
+
+# In this chunk I use distance quantile instead of prox, and the new one for Figure 1 is presented as "d"
+
+seq <- quantile(base_3$distance)
+seq[5] <- 20
+
+base_3$Distance.Quant <- cut(base_3$distance, breaks = seq)
+
+base_3$Distance.Quant <- as.numeric(base_3$Distance.Quant)
+
+m1_3_multinom_dis_quant <- multinom(partyid ~ Distance.Quant+edad+gender+education+sec+cellphone+internet+localidae, data = base_3)
+
+summary(m1_3_multinom_dis_quant)
+
+formula_presi_dis_quant <- presidentialapp ~ Distance.Quant+edad+gender+education+sec+cellphone+internet+localidae
+m4_presi_dis_quant <- glm(formula_presi_dis_quant, data = base_3, family = "binomial")
+
+summary(m4_presi_dis_quant)
+
+formula_gov_dis_quant <- govapp ~ Distance.Quant+edad+gender+education+sec+cellphone+internet+localidae
+m5_gov_dis_quant <- glm(formula_gov_dis_quant, data = base_3, family = "binomial")
+
+summary(m5_gov_dis_quant)
+
+formula_congress_dis_quant <- congressapp ~ Distance.Quant+edad+gender+education+sec+cellphone+internet+localidae
+m6_congress_dis_quant <- glm(formula_congress_dis_quant, data = base_3, family = "binomial")
+
+summary(m6_congress_dis_quant)
+
+# Seemingly Unrelated Regression by systemfit
+# which result to trust, single regress or SUR?
+
+sur_part1_dis_quant <- systemfit(list(presi = formula_presi_dis_quant, gov = formula_gov_dis_quant, congress = formula_congress_dis_quant), method = "SUR", data = base_3)
+
+summary(sur_part1_dis_quant)
+
+formula_party_dis_quant <- belongparty ~ Distance.Quant+edad+gender+education+sec+cellphone+internet+localidae
+m7_party_dis_quant <- glm(formula_party_dis_quant, data = base_3, family = "binomial")
+
+summary(m7_party_dis_quant)
+
+formula_union_dis_quant <- belongunion ~ Distance.Quant+edad+gender+education+sec+cellphone+internet+localidae
+m8_union_dis_quant <- glm(formula_union_dis_quant, data = base_3, family = "binomial")
+
+summary(m8_union_dis_quant)
+
+formula_reli_dis_quant <- belongreligiousgroup ~ Distance.Quant+edad+gender+education+sec+cellphone+internet+localidae
+m9_reli_dis_quant <- glm(formula_reli_dis_quant, data = base_3, family = "binomial")
+
+summary(m9_reli_dis_quant)
+
+# Seemingly Unrelated Regression by systemfit
+# which result to trust, single regress or SUR?
+
+sur_part2_dis_quant <- systemfit(list(party = formula_party_dis_quant, union = formula_union_dis_quant, reli = formula_reli_dis_quant), data = base_3)
+
+summary(sur_part2_dis_quant)
+
+# The last four formula are purely estimated by SUR
+# Maybe replicate by regressing all formula separately?
+
+formula_interestpoli_dis_quant <- interestpolitics ~ Distance.Quant+edad+gender+education+sec+cellphone+internet+localidae
+
+formula_interestelec_dis_quant <- interestelections ~ Distance.Quant+edad+gender+education+sec+cellphone+internet+localidae
+
+formula_discuss_dis_quant <- discusspolitics ~ Distance.Quant+edad+gender+education+sec+cellphone+internet+localidae
+
+formula_follow_dis_quant <- follownews ~ Distance.Quant+edad+gender+education+sec+cellphone+internet+localidae
+
+sur_part3_dis_quant <- systemfit(list(interestpoli = formula_interestpoli_dis_quant, interestelec = formula_interestelec_dis_quant, discuss = formula_discuss_dis_quant, follow = formula_follow_dis_quant), data = base_3)
+
+summary(sur_part3_dis_quant)
+
+```
+
+```{r distance_quant_figure_1}
+
+results_distance_quant <- read.table(header=T, con <- textConnection('
+IV	Coef_dist	SE_dist Model	Included	Variable Order
+Distance_Quantile	0.027	0.068	1	1	PRI 13
+Distance_Quantile  0.074	0.100	1	1	PAN 12
+Distance_Quantile  0.052  0.084 1	1	PRD 11
+Distance_Quantile  0.007	0.012	2	1	"President\'s Approval" 10
+Distance_Quantile  0.011	0.012	2	1	"Governor\'s Approval" 9
+Distance_Quantile  -0.003  0.012 2	1	"Congress\'s Approval" 8
+Distance_Quantile  -0.0003  0.0033 3	1	"Party Member" 7
+Distance_Quantile  -0.0035	0.0034 3	1	"Union Member" 6
+Distance_Quantile  0.004  0.0055 3	1	"Religious group member" 5
+Distance_Quantile  -0.072  0.062 4	1	"Interest in politics" 4
+Distance_Quantile  0.061	0.057 4	1	"Interest in elections" 3
+Distance_Quantile  -0.122 0.059 4	1	"Talks about politics" 2
+Distance_Quantile  -0.012  0.006 4	1	"Follows news" 1
+'))
+close(con)
+
+results_distance_quant$min_dist<-results_distance_quant$Coef_dist-(1.96*results_distance_quant$SE_dist)
+results_distance_quant$max_dist<-results_distance_quant$Coef_dist+(1.96*results_distance_quant$SE_dist)
+results_distance_quant$Color[results_distance_quant$Included==1]<-"black"
+results_distance_quant$Color[results_distance_quant$Included==0]<-"white"
+
+results_distance_quant$Model[results_distance_quant$Model==1]<-"1. Party ID"
+results_distance_quant$Model[results_distance_quant$Model==2]<-"2. Approval"
+results_distance_quant$Model[results_distance_quant$Model==3]<-"3. Membership"
+results_distance_quant$Model[results_distance_quant$Model==4]<-"4. Political Awareness"
+
+results_distance_quant$Variable <- factor(results_distance_quant$Variable, levels=results_distance_quant$Variable[order(results_distance_quant$Order)])
+
+# c is the figure 1 with distance instead of prox; I am still trying to combine them into one so that comparison is possible
+d<-ggplot(results_distance_quant, aes(y=reorder(Variable, Order), x = Coef_dist)) +
+#  scale_colour_gradient(low="white", high="black")+
+  geom_point(size=3) +
+  facet_grid( ~ Model)+
+  geom_errorbarh(aes(xmin=min_dist, xmax=max_dist)) +
+  geom_vline(xintercept = 0, linetype=2, color="red") +
+  labs( x = "Coefficients", y = "Variable") +
+  theme_bw()+
+  theme(
+    axis.title.x = element_text(face="bold", size=18),
+    axis.title.y = element_text(face="bold", size=18, angle=90),
+    axis.text.x  = element_text( size=16),
+    strip.text.x = element_text(size=16),
+    axis.text.y  = element_text( size=18),
+    plot.title = element_text(hjust = 0.5)) +
+  ggtitle("Distance Measure (Quantile)")
+
+d
+
+```
+
+```{r model_figure_1_distance_decile}
+
+# In this chunk I use distance decile instead of prox, and the new one for Figure 1 is presented as "e"
+
+seq2<- quantile(base_3$distance, prob = seq(0, 1, length = 11))
+seq2[11] <- 20
+
+base_3$Distance.Decile <- cut(base_3$distance, breaks = seq2)
+base_3$Distance.Decile <- as.numeric(base_3$Distance.Decile)
+
+m1_3_multinom_dis_decile <- multinom(partyid ~ Distance.Decile+edad+gender+education+sec+cellphone+internet+localidae, data = base_3)
+
+summary(m1_3_multinom_dis_decile)
+
+formula_presi_dis_decile <- presidentialapp ~ Distance.Decile+edad+gender+education+sec+cellphone+internet+localidae
+m4_presi_dis_decile <- glm(formula_presi_dis_decile, data = base_3, family = "binomial")
+
+summary(m4_presi_dis_decile)
+
+formula_gov_dis_decile <- govapp ~ Distance.Decile+edad+gender+education+sec+cellphone+internet+localidae
+m5_gov_dis_decile <- glm(formula_gov_dis_decile, data = base_3, family = "binomial")
+
+summary(m5_gov_dis_decile)
+
+formula_congress_dis_decile <- congressapp ~ Distance.Decile+edad+gender+education+sec+cellphone+internet+localidae
+m6_congress_dis_decile <- glm(formula_congress_dis_decile, data = base_3, family = "binomial")
+
+summary(m6_congress_dis_decile)
+
+# Seemingly Unrelated Regression by systemfit
+# which result to trust, single regress or SUR?
+
+sur_part1_dis_decile <- systemfit(list(presi = formula_presi_dis_decile, gov = formula_gov_dis_decile, congress = formula_congress_dis_decile), method = "SUR", data = base_3)
+
+summary(sur_part1_dis_decile)
+
+formula_party_dis_decile <- belongparty ~ Distance.Decile+edad+gender+education+sec+cellphone+internet+localidae
+m7_party_dis_decile <- glm(formula_party_dis_decile, data = base_3, family = "binomial")
+
+summary(m7_party_dis_decile)
+
+formula_union_dis_decile <- belongunion ~ Distance.Decile+edad+gender+education+sec+cellphone+internet+localidae
+m8_union_dis_decile <- glm(formula_union_dis_decile, data = base_3, family = "binomial")
+
+summary(m8_union_dis_decile)
+
+formula_reli_dis_decile <- belongreligiousgroup ~ Distance.Decile+edad+gender+education+sec+cellphone+internet+localidae
+m9_reli_dis_decile <- glm(formula_reli_dis_decile, data = base_3, family = "binomial")
+
+summary(m9_reli_dis_decile)
+
+# Seemingly Unrelated Regression by systemfit
+# which result to trust, single regress or SUR?
+
+sur_part2_dis_decile <- systemfit(list(party = formula_party_dis_decile, union = formula_union_dis_decile, reli = formula_reli_dis_decile), data = base_3)
+
+summary(sur_part2_dis_decile)
+
+# The last four formula are purely estimated by SUR
+# Maybe replicate by regressing all formula separately?
+
+formula_interestpoli_dis_decile <- interestpolitics ~ Distance.Decile+edad+gender+education+sec+cellphone+internet+localidae
+
+formula_interestelec_dis_decile <- interestelections ~ Distance.Decile+edad+gender+education+sec+cellphone+internet+localidae
+
+formula_discuss_dis_decile <- discusspolitics ~ Distance.Decile+edad+gender+education+sec+cellphone+internet+localidae
+
+formula_follow_dis_decile <- follownews ~ Distance.Decile+edad+gender+education+sec+cellphone+internet+localidae
+
+sur_part3_dis_decile <- systemfit(list(interestpoli = formula_interestpoli_dis_decile, interestelec = formula_interestelec_dis_decile, discuss = formula_discuss_dis_decile, follow = formula_follow_dis_decile), data = base_3)
+
+summary(sur_part3_dis_decile)
+
+```
+
+```{r distance_decile_figure_1}
+
+results_distance_decile <- read.table(header=T, con <- textConnection('
+IV	Coef_dist	SE_dist Model	Included	Variable Order
+Distance_Decile	0.006	0.027	1	1	PRI 13
+Distance_Decile  0.009	0.04	1	1	PAN 12
+Distance_Decile  0.010  0.033 1	1	PRD 11
+Distance_Decile  0.0054	0.005	2	1	"President\'s Approval" 10
+Distance_Decile  0.0054	0.005	2	1	"Governor\'s Approval" 9
+Distance_Decile  0.0005  0.005 2	1	"Congress\'s Approval" 8
+Distance_Decile  0.0002  0.0013 3	1	"Party Member" 7
+Distance_Decile  -0.0008	0.0013 3	1	"Union Member" 6
+Distance_Decile  -0.0004  0.0022 3	1	"Religious group member" 5
+Distance_Decile  -0.037  0.025 4	1	"Interest in politics" 4
+Distance_Decile  0.015	0.023 4	1	"Interest in elections" 3
+Distance_Decile  -0.061 0.023 4	1	"Talks about politics" 2
+Distance_Decile  -0.0474  0.024 4	1	"Follows news" 1
+'))
+close(con)
+
+results_distance_decile$min_dist<-results_distance_decile$Coef_dist-(1.96*results_distance_decile$SE_dist)
+results_distance_decile$max_dist<-results_distance_decile$Coef_dist+(1.96*results_distance_decile$SE_dist)
+results_distance_decile$Color[results_distance_decile$Included==1]<-"black"
+results_distance_decile$Color[results_distance_decile$Included==0]<-"white"
+
+results_distance_decile$Model[results_distance_decile$Model==1]<-"1. Party ID"
+results_distance_decile$Model[results_distance_decile$Model==2]<-"2. Approval"
+results_distance_decile$Model[results_distance_decile$Model==3]<-"3. Membership"
+results_distance_decile$Model[results_distance_decile$Model==4]<-"4. Political Awareness"
+
+results_distance_decile$Variable <- factor(results_distance_decile$Variable, levels=results_distance_decile$Variable[order(results_distance_decile$Order)])
+
+# e is the figure 1 with distance decile
+e<-ggplot(results_distance_decile, aes(y=reorder(Variable, Order), x = Coef_dist)) +
+#  scale_colour_gradient(low="white", high="black")+
+  geom_point(size=3) +
+  facet_grid( ~ Model)+
+  geom_errorbarh(aes(xmin=min_dist, xmax=max_dist)) +
+  geom_vline(xintercept = 0, linetype=2, color="red") +
+  labs( x = "Coefficients", y = "Variable") +
+  theme_bw()+
+  theme(
+    axis.title.x = element_text(face="bold", size=18),
+    axis.title.y = element_text(face="bold", size=18, angle=90),
+    axis.text.x  = element_text( size=16),
+    strip.text.x = element_text(size=16),
+    axis.text.y  = element_text( size=18),
+    plot.title = element_text(hjust = 0.5)) +
+  ggtitle("Distance Measure (Decile)")
+
+e
+
+```
