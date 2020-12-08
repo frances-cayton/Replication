@@ -791,7 +791,7 @@ datasim$dv[43:63]<-"Vázquez Mota"
 
 
 ```{r}
-ggplot()+
+logdist <- ggplot()+
   geom_line(data=datasim, aes(x=distance, y=mean,  linetype=dv))+
   geom_ribbon(data=datasim, aes(x=distance,  ymin=lower, 
                       ymax=upper, fill=dv),  alpha=0.5)+theme_bw()+
@@ -805,7 +805,7 @@ ggplot()+
         legend.text = element_text(size = 12),
         plot.title = element_text(hjust = 0.5))
 
-#ggsave("originalprox.jpg")
+ggsave("logdist.jpg")
 ```
 
 
