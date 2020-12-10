@@ -1502,3 +1502,158 @@ e<-ggplot(results_distance_decile, aes(y=reorder(Variable, Order), x = Coef_dist
 e
 
 ```
+
+## Stronghold Threshold
+
+```{r stronghold_new}
+
+# Not using majority vote as stronghold
+# But treat as stronghold if one party receives X more percentage points of the vote share than any other party
+# Define X = 10 here; can further play around the threshold
+
+table$PRIstr2 <- ifelse(table$PRI09 > (10+table$PRD09) & table$PRI09 > (10+table$PAN09), 1, 0)
+table$PRDstr2 <- ifelse(table$PRD09 > (10+table$PRI09) & table$PRD09 > (10+table$PAN09), 1, 0)
+table$PANstr2 <- ifelse(table$PAN09 > (10+table$PRI09) & table$PAN09 > (10+table$PRD09), 1, 0)
+
+# These thresholds rapidly increase the percent of strongholds for all parties
+
+benchmarkPRI.1.Quantile_new <- lm( EPNa ~ Distance.Quant*PRIstr2*highTURNOUT+
+                        Distance.Quant*PRDstr2*highTURNOUT+Distance.Quant*PANstr2*highTURNOUT+ 
+                         PRI09a+PRD09a+PAN09a+PART09+
+                         lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+                         EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+                         PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+                         PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+                         CAR+CELULAR+INTERNET+
+                         id_mun, data=table, x=TRUE, y=TRUE)
+
+
+#The same model but testing for other parties: 
+
+benchmarkPRD.1.Quantile_new <- lm(AMLOa ~ Distance.Quant*PRIstr2*highTURNOUT+
+                        Distance.Quant*PRDstr2*highTURNOUT+Distance.Quant*PANstr2*highTURNOUT+     
+                         PRI09a+PRD09a+PAN09a+PART09+
+                         lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+                         EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+                         PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+                         PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+                         CAR+CELULAR+INTERNET+
+                         id_mun, data=table, x=TRUE, y=TRUE)
+
+
+benchmarkPAN.1.Quantile_new <- lm( JVMa ~ Distance.Quant*PRIstr2*highTURNOUT+Distance.Quant*PRDstr2*highTURNOUT+Distance.Quant*PANstr2*highTURNOUT+     
+                         PRI09a+PRD09a+PAN09a+PART09+
+                         lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+                         EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+                         PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+                         PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+                         CAR+CELULAR+INTERNET+
+                         id_mun, data=table, x=TRUE, y=TRUE)
+
+
+
+benchmarkPART.1.Quantile_new <- lm( PART ~ Distance.Quant*PRIstr2*highTURNOUT+Distance.Quant*PRDstr2*highTURNOUT+Distance.Quant*PANstr2*highTURNOUT+     
+                          PRI09a+PRD09a+PAN09a+PART09+
+                          lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+                          EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+                          PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+                          PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+                          CAR+CELULAR+INTERNET+
+                          id_mun, data=table, x=TRUE, y=TRUE)
+
+```
+
+### For the Quantiles (New Stronghold threshold)
+
+```{r}
+####Predicted vote shares in PRD Mobilized Strongholds
+
+g <- glm(EPNa ~ Distance.Quant*PRIstr2*highTURNOUT+Distance.Quant*PANstr2*highTURNOUT+PRDstr2+
+           PRI09a+PRD09a+PAN09a+PART09+
+           lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+           EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+           PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+           PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+           CAR+CELULAR+INTERNET+
+           id_mun, data=table, family = 'gaussian')
+
+marg<-marg(mod = g, var_interest = c("Distance.Quant"), type = 'levels', data=table[table$PRDstr2==1 & table$highTURNOUT==1,])
+
+#getting confidence intervals for the expected PN turnout in PRD str2ongholds
+mean <- marg[[1]]$Margin
+upper <- marg[[1]]$'Lower CI (95%)'
+lower <- marg[[1]]$'Upper CI (95%)'
+
+seq <- as.numeric(quantile(table$distance)[-1])
+seq[4] <- 20
+dataPRI<-data.frame(cbind(seq, mean, upper, lower))
+
+#same for AMLO
+g <- glm(AMLOa ~ Distance.Quant*PRIstr2*highTURNOUT+Distance.Quant*PANstr2*highTURNOUT+PRDstr2+
+           PRI09a+PRD09a+PAN09a+PART09+
+           lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+           EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+           PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+           PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+           CAR+CELULAR+INTERNET+
+           id_mun, data=table, family = 'gaussian')
+
+marg<-marg(mod = g, var_interest = c("Distance.Quant"), type = 'levels', data=table[table$PRDstr2==1 & table$highTURNOUT==1,])
+
+mean <- marg[[1]]$Margin
+upper <- marg[[1]]$'Lower CI (95%)'
+lower <- marg[[1]]$'Upper CI (95%)'
+
+
+seq <- as.numeric(quantile(table$distance)[-1])
+seq[4] <- 20
+dataPRD<-data.frame(cbind(seq, mean, upper, lower))
+
+
+g <- glm(JVMa ~ Distance.Quant*PRIstr2*highTURNOUT+PRDstr2+Distance.Quant*PANstr2*highTURNOUT+PRDstr2+     
+           PRI09a+PRD09a+PAN09a+PART09+
+           lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+           EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+           PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+           PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+           CAR+CELULAR+INTERNET+
+           id_mun, data=table, family = 'gaussian')
+
+marg<-marg(mod = g, var_interest = c("Distance.Quant"), type = 'levels', data=table[table$PRDstr2==1 & table$highTURNOUT==1,])
+
+mean <- marg[[1]]$Margin
+upper <- marg[[1]]$'Lower CI (95%)'
+lower <- marg[[1]]$'Upper CI (95%)'
+
+
+seq <- as.numeric(quantile(table$distance)[-1])
+seq[4] <- 20
+dataPAN<-data.frame(cbind(seq, mean, upper, lower))
+
+
+datasim<-data.frame(rbind(dataPRI, dataPRD, dataPAN))
+
+datasim$dv<-NA
+datasim$dv[1:4]<-"Pena Nieto"
+datasim$dv[5:8]<-"López Obrador"
+datasim$dv[9:12]<-"Vázquez Mota"
+```
+
+
+```{r}
+datasim %>%
+ggplot()+
+  geom_line(aes(x=seq, y=mean,  linetype=dv))+
+ geom_ribbon(aes(x= as.numeric(seq),  ymin= lower,  ymax= upper, fill= dv),  alpha=0.5)+theme_bw()+
+  ylab("Predicted vote shares (%)")+
+  ggtitle("Coarsened Quantiles") +
+  xlab("Distance to Soriana (km)")+xlim(1.5, 20)+ylim(0,50)+ 
+  scale_fill_manual(values = c("#F0E442","red", "deepskyblue2"), name="")+
+  scale_linetype_manual(values=c("solid", "longdash","dotted"), name="" )+
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=12),
+        legend.text = element_text(size = 12),
+        plot.title = element_text(hjust = .5)) -> quantiles
+
+ggsave("quantiles2.jpg")
+```
