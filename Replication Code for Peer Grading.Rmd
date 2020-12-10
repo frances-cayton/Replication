@@ -315,12 +315,30 @@ stargazer(coeftest(benchmarkPRI.1.proximity, covBMprox), coeftest(benchmarkPRI.1
 
 Noting the lack of high turnout & PRD observations (basis of tables 1 & 2  in the paper) 
 ```{r}
+
 table %>% filter(highTURNOUT == 1 & PRDstr == 1) -> subset
 nrow(subset)
+
 summary(subset$Distance.Quant)
 summary(subset$Distance.Decile)
+
+
 ```
 
+Setting max quantile and decile to 20 for visualizations
+```{r}
+seq <- quantile(table$distance, prob = seq(0, 1, length = 11))
+seq[11] <- 20
+table$Distance.Decile <- cut(table$distance, breaks = seq)
+
+table$Distance.Decile <- as.factor(table$Distance.Decile)
+
+seq <- quantile(table$distance, prob = seq(0, 1, length = 5))
+seq[5] <- 20
+table$Distance.Quant <- cut(table$distance, breaks = seq)
+
+table$Distance.Quant <- as.factor(table$Distance.Quant)
+```
 
 # Figure 1
 Standard proximity 
