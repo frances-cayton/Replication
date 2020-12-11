@@ -1664,9 +1664,112 @@ ggplot()+
 ggsave("quantiles2.jpg")
 ```
 
+###For the Deciles (New Stronghold threshold)
+
+```{r}
+####Predicted vote shares in PRD Mobilized Strongholds
+
+g <- glm(EPNa ~ Distance.Decile*PRIstr2*highTURNOUT+Distance.Decile*PANstr2+PRDstr2+
+           PRI09a+PRD09a+PAN09a+PART09+
+           lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+           EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+           PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+           PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+           CAR+CELULAR+INTERNET+
+           id_mun, data=table, family = 'gaussian')
+
+marg<-marg(mod = g, var_interest = c("Distance.Decile"), type = 'levels', data=table[table$PRDstr2==1 & table$highTURNOUT==1,])
+
+#getting confidence intervals for the expected PN turnout in PRD strongholds
+mean <- marg[[1]]$Margin
+upper <- marg[[1]]$'Lower CI (95%)'
+lower <- marg[[1]]$'Upper CI (95%)'
+
+seq <- as.numeric(quantile(table$distance)[-1])
+
+seq <- quantile(table$distance, prob = seq(0, 1, length = 11))
+seq <- seq[-1]
+seq[10] <- 20
+table$Distance.Decile <- cut(table$distance, breaks = seq)
+
+dataPRI<-data.frame(cbind(seq, mean, upper, lower))
+
+#same for AMLO
+g <- glm(AMLOa ~ Distance.Decile*PRIstr2*highTURNOUT+Distance.Decile*PANstr2+PRDstr2+
+           PRI09a+PRD09a+PAN09a+PART09+
+           lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+           EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+           PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+           PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+           CAR+CELULAR+INTERNET+
+           id_mun, data=table, family = 'gaussian')
+
+marg<-marg(mod = g, var_interest = c("Distance.Decile"), type = 'levels', data=table[table$PRDstr2==1 & table$highTURNOUT==1,])
+
+mean <- marg[[1]]$Margin
+upper <- marg[[1]]$'Lower CI (95%)'
+lower <- marg[[1]]$'Upper CI (95%)'
+
+
+seq <- quantile(table$distance, prob = seq(0, 1, length = 11))
+seq <- seq[-1]
+seq[10] <- 20
+dataPRD<-data.frame(cbind(seq, mean, upper, lower))
+
+
+g <- glm(JVMa ~ Distance.Decile*PRIstr2*highTURNOUT+PRDstr2+Distance.Decile*PANstr2+PRDstr2+     
+           PRI09a+PRD09a+PAN09a+PART09+
+           lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+           EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+           PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+           PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+           CAR+CELULAR+INTERNET+
+           id_mun, data=table, family = 'gaussian')
+
+marg<-marg(mod = g, var_interest = c("Distance.Decile"), type = 'levels', data=table[table$PRDstr2==1 & table$highTURNOUT==1,])
+
+mean <- marg[[1]]$Margin
+upper <- marg[[1]]$'Lower CI (95%)'
+lower <- marg[[1]]$'Upper CI (95%)'
+
+seq <- quantile(table$distance, prob = seq(0, 1, length = 11))
+seq <- seq[-1]
+seq[10] <- 20
+dataPAN<-data.frame(cbind(seq, mean, upper, lower))
+
+datasim<-data.frame(rbind(dataPRI, dataPRD, dataPAN))
+```
+
+
+```{r}
+datasim$dv<-NA
+datasim$dv[1:10]<-"Pena Nieto"
+datasim$dv[11:20]<-"López Obrador"
+datasim$dv[21:30]<-"Vázquez Mota"
+```
+
+
+```{r}
+datasim %>%
+ggplot()+
+  geom_line(aes(x=seq, y=mean,  linetype=dv))+
+ geom_ribbon(aes(x= as.numeric(seq),  ymin= lower,  ymax= upper, fill= dv),  alpha=0.5)+theme_bw()+
+  ylab("Predicted vote shares (%)")+
+  xlab("Distance to Soriana (km)")+xlim(1, 20)+ylim(0,50)+ 
+  ggtitle("Coarsened Deciles") +
+  scale_fill_manual(values = c("#F0E442","red", "deepskyblue2"), name="")+
+  scale_linetype_manual(values=c("solid", "longdash","dotted"), name="" )+
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=12),
+        legend.text = element_text(size = 12),
+        plot.title = element_text(hjust = .5)) -> deciles
+
+ggsave("deciles2.jpg")
+```
+
 Sample non-distance model for section 3: 
 ```{r}
-summary(glm(EPNa ~ PRIstr*highTURNOUT+PRDstr*highTURNOUT+PANstr*highTURNOUT+     
+summary(glm(EPNa ~ PRIstr2*highTURNOUT+PRDstr2*highTURNOUT+PANstr2*highTURNOUT+     
            PRI09a+PRD09a+PAN09a+PART09+
            lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
            EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
