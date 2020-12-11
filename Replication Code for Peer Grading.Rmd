@@ -1569,6 +1569,100 @@ benchmarkPART.1.Quantile_new <- lm( PART ~ Distance.Quant*PRIstr2*highTURNOUT+Di
 
 ```
 
+### Distance plot (New Stronghold threshold)
+```{r}
+####Predicted vote shares in PRD Mobilized Strongholds
+
+g <- glm(EPNa ~ distance*PRIstr2*highTURNOUT+distance*PRDstr2*highTURNOUT+distance*PANstr2*highTURNOUT+     
+           PRI09a+PRD09a+PAN09a+PART09+
+           lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+           EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+           PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+           PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+           CAR+CELULAR+INTERNET+
+           id_mun, data=table, family = 'gaussian')
+
+at.dist <- seq(0, 20, .5)
+marg<-marg(mod = g, var_interest = c("distance"), type = 'levels', data=table[table$PRDstr2==1 & table$highTURNOUT==1,],
+           at_var_interest = seq(0, 20, by = .5),  cofint=.95)
+
+#getting confidence intervals for the expected PN turnout in PRD strongholds
+mean <- marg[[1]]$Margin
+upper <- marg[[1]]$'Lower CI (95%)'
+lower <- marg[[1]]$'Upper CI (95%)'
+
+dataPRI<-data.frame(cbind(at.dist, mean, upper, lower))
+
+
+#same for AMLO
+g <- glm(AMLOa ~ distance*PRIstr2*highTURNOUT+distance*PRDstr2*highTURNOUT+distance*PANstr2*highTURNOUT+     
+           PRI09a+PRD09a+PAN09a+PART09+
+           lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+           EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+           PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+           PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+           CAR+CELULAR+INTERNET+
+           id_mun, data=table, family = 'gaussian')
+
+marg<-marg(mod = g, var_interest = c("distance"), type = 'levels', data=table[table$PRDstr2==1 & table$highTURNOUT==1,],
+           at_var_interest = seq(0, 20, by = .5), cofint=.95)
+
+mean <- marg[[1]]$Margin
+upper <- marg[[1]]$'Lower CI (95%)'
+lower <- marg[[1]]$'Upper CI (95%)'
+
+dataPRD<-data.frame(cbind(at.dist, mean, upper, lower))
+
+
+g <- glm(JVMa ~ distance*PRIstr2*highTURNOUT+distance*PRDstr2*highTURNOUT+distance*PANstr2*highTURNOUT+     
+           PRI09a+PRD09a+PAN09a+PART09+
+           lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+           EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+           PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+           PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+           CAR+CELULAR+INTERNET+
+           id_mun, data=table, family = 'gaussian')
+
+marg<-marg(mod = g, var_interest = c("distance"), 
+           type = 'levels', data=table[table$PRDstr2==1 & table$highTURNOUT==1,],
+           at_var_interest = seq(0, 20, by = .5),cofint=.95)
+
+mean <- marg[[1]]$Margin
+upper <- marg[[1]]$'Lower CI (95%)'
+lower <- marg[[1]]$'Upper CI (95%)'
+
+dataPAN<-data.frame(cbind(at.dist, mean, upper, lower))
+
+datasim<-data.frame(rbind(dataPRI, dataPRD, dataPAN))
+```
+
+
+```{r}
+datasim$dv<-NA
+datasim$dv[1:41]<-"Pena Nieto"
+datasim$dv[42:82]<-"López Obrador"
+datasim$dv[83:123]<-"Vázquez Mota"
+```
+
+
+```{r}
+distance <- ggplot()+
+  geom_line(data=datasim, aes(x=at.dist, y=mean,  linetype=dv))+
+  geom_ribbon(data=datasim, aes(x=at.dist,  ymin=lower, 
+                      ymax=upper, fill=dv),  alpha=0.5)+theme_bw()+
+  ylab("Predicted vote shares (%)")+ 
+  ggtitle("Pure Distance") +
+  xlab("Distance to Soriana (km)")+xlim(2.5, 20)+ylim(0,50)+ 
+ scale_fill_manual(values = c("#F0E442","red", "deepskyblue2"), name="")+
+  scale_linetype_manual(values=c("solid", "longdash","dotted"), name="" )+
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=12),
+        legend.text = element_text(size = 12),
+        plot.title = element_text(hjust = .5))
+
+ggsave("distance2.jpg")
+```
+
 ### For the Quantiles (New Stronghold threshold)
 
 ```{r}
@@ -1765,6 +1859,100 @@ ggplot()+
         plot.title = element_text(hjust = .5)) -> deciles
 
 ggsave("deciles2.jpg")
+```
+
+### Log distance (New Stronghold threshold)
+
+```{r}
+####Predicted vote shares in PRD Mobilized Strongholds
+
+g <- glm(EPNa ~ logdist*PRIstr2*highTURNOUT+logdist*PRDstr2*highTURNOUT+logdist*PANstr2*highTURNOUT+     
+           PRI09a+PRD09a+PAN09a+PART09+
+           lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+           EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+           PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+           PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+           CAR+CELULAR+INTERNET+
+           id_mun, data=table, family = 'gaussian')
+
+at.log <- seq(-5, 5, by = .5) 
+marg<-marg(mod = g, var_interest = c("logdist"), type = 'levels', data=table[table$PRDstr2==1 & table$highTURNOUT==1,],
+           at_var_interest = seq(-5, 5, by = .5),  cofint=.95)
+
+#getting confidence intervals for the expected PN turnout in PRD strongholds
+mean <- marg[[1]]$Margin
+upper <- marg[[1]]$'Lower CI (95%)'
+lower <- marg[[1]]$'Upper CI (95%)'
+
+dataPRI<-data.frame(cbind(at.log, mean, upper, lower))
+dataPRI$distance <- exp(dataPRI$at.log)
+
+#same for AMLO
+g <- glm(AMLOa ~ logdist*PRIstr2*highTURNOUT+logdist*PRDstr2*highTURNOUT+logdist*PANstr2*highTURNOUT+     
+           PRI09a+PRD09a+PAN09a+PART09+
+           lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+           EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+           PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+           PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+           CAR+CELULAR+INTERNET+
+           id_mun, data=table, family = 'gaussian')
+
+at.log <- seq(-5, 5, by = .5) 
+marg<-marg(mod = g, var_interest = c("logdist"), type = 'levels', data=table[table$PRDstr2==1 & table$highTURNOUT==1,],
+           at_var_interest = seq(-5, 5, by = .5),  cofint=.95)
+
+mean <- marg[[1]]$Margin
+upper <- marg[[1]]$'Lower CI (95%)'
+lower <- marg[[1]]$'Upper CI (95%)'
+
+dataPRD<-data.frame(cbind(at.log, mean, upper, lower))
+dataPRD$distance <- exp(dataPRD$at.log)
+
+g <- glm(JVMa ~ logdist*PRIstr2*highTURNOUT+logdist*PRDstr2*highTURNOUT+logdist*PANstr2*highTURNOUT+     
+           PRI09a+PRD09a+PAN09a+PART09+
+           lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+           EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+           PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+           PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+           CAR+CELULAR+INTERNET+
+           id_mun, data=table, family = 'gaussian')
+
+at.log <- seq(-5, 5, by = .5) 
+marg<-marg(mod = g, var_interest = c("logdist"), type = 'levels', data=table[table$PRDstr2==1 & table$highTURNOUT==1,],
+           at_var_interest = seq(-5, 5, by = .5),  cofint=.95)
+
+mean <- marg[[1]]$Margin
+upper <- marg[[1]]$'Lower CI (95%)'
+lower <- marg[[1]]$'Upper CI (95%)'
+
+dataPAN<-data.frame(cbind(at.log, mean, upper, lower))
+dataPAN$distance <- exp(dataPAN$at.log)
+
+datasim<-data.frame(rbind(dataPRI, dataPRD, dataPAN))
+
+datasim$dv<-NA
+datasim$dv[1:21]<-"Pena Nieto" # Chengyu: I have to change the name to Pena
+datasim$dv[22:42]<-"López Obrador"
+datasim$dv[43:63]<-"Vázquez Mota"
+```
+
+
+```{r}
+logdist <- ggplot()+
+  geom_line(data=datasim, aes(x=distance, y=mean,  linetype=dv))+
+  geom_ribbon(data=datasim, aes(x=distance,  ymin=lower, 
+                      ymax=upper, fill=dv),  alpha=0.5)+theme_bw()+
+  ylab("Predicted vote shares (%)") +
+  xlab("Distance to Soriana (km)")+ 
+  ggtitle("LogDistance") +
+  scale_fill_manual(values = c("#F0E442","red", "deepskyblue2"), name="")+
+  scale_linetype_manual(values=c("solid", "longdash","dotted"), name="" )+
+  theme(axis.text=element_text(size= 12),
+        axis.title=element_text(size= 12),
+        legend.text = element_text(size = 12),
+        plot.title = element_text(hjust = 0.5))
+
+ggsave("logdist2.jpg")
 ```
 
 Sample non-distance model for section 3: 
