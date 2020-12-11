@@ -340,6 +340,8 @@ table$Distance.Quant <- cut(table$distance, breaks = seq)
 table$Distance.Quant <- as.factor(table$Distance.Quant)
 ```
 
+
+
 # Figure 1
 Standard proximity 
 ```{r}
@@ -732,6 +734,8 @@ ggplot()+
 ggsave("deciles.jpg")
 ```
 
+
+
 ##Log distance
 
 ```{r}
@@ -879,9 +883,9 @@ df %>%
   geom_errorbarh(aes(xmin=lowerCSE,xmax=upperCSE, color = "blue")) + 
   scale_color_discrete(name = "Legend", labels = c("Classical", "Robust")) +
  xlab("Coefficient") +
-  ggtitle("High Proximity*Distance Measure*PRD Stronghold Estimates") +
+  ggtitle("High Turnout*Distance Measure*PRD Stronghold Estimates") +
   ylab("Model") +
-  labs(caption = "Using smallest quantile & decile coefficient for which there were estimates, given multicollinearity problem.") -> se.plot
+  labs(caption = "95% confidence interval estimated with Robust & Classical Standard Errors, using smallest \n quantile & decile coefficient for which there were estimates, given multicollinearity problem.") -> se.plot
     
 se.plot
 
@@ -1249,7 +1253,7 @@ c
 # In this chunk I use distance quantile instead of prox, and the new one for Figure 1 is presented as "d"
 
 seq <- quantile(base_3$distance)
-seq[5] <- 20
+#seq[5] <- 20
 
 base_3$Distance.Quant <- cut(base_3$distance, breaks = seq)
 
@@ -1379,6 +1383,8 @@ d
 # In this chunk I use distance decile instead of prox, and the new one for Figure 1 is presented as "e"
 
 seq2<- quantile(base_3$distance, prob = seq(0, 1, length = 11))
+
+
 seq2[11] <- 20
 
 base_3$Distance.Decile <- cut(base_3$distance, breaks = seq2)
@@ -1656,4 +1662,16 @@ ggplot()+
         plot.title = element_text(hjust = .5)) -> quantiles
 
 ggsave("quantiles2.jpg")
+```
+
+Sample non-distance model for section 3: 
+```{r}
+summary(glm(EPNa ~ PRIstr*highTURNOUT+PRDstr*highTURNOUT+PANstr*highTURNOUT+     
+           PRI09a+PRD09a+PAN09a+PART09+
+           lnpop+P18+P65+area+density+INDIGENOUS+CATHOLIC+NONRELIGIOUS+
+           EDUCATION+POSTEDUC+ILLITERACY+PROM_HNV+
+           PEAprop+PEAfemale+NOINSURANCE+FEMALEJEFA+
+           PERROOM+DIRTFLOOR+SERVICES+NO_SERVICES+
+           CAR+CELULAR+INTERNET+
+           id_mun, data=table, family = 'gaussian'))
 ```
