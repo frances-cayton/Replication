@@ -432,9 +432,9 @@ originalprox <- ggplot()+
   theme(axis.text=element_text(size= 12),
         axis.title=element_text(size= 12),
         legend.text = element_text(size = 12),
-        plot.title = element_text(hjust = 0.5))
+        plot.title = element_text(hjust = 0.5),legend.position = "none")
 
-ggsave("originalprox.jpg")
+ggsave("originalprox.jpg", width = 7, height = 7)
 ```
 
 
@@ -1567,6 +1567,14 @@ benchmarkPART.1.Quantile_new <- lm( PART ~ Distance.Quant*PRIstr2*highTURNOUT+Di
                           CAR+CELULAR+INTERNET+
                           id_mun, data=table, x=TRUE, y=TRUE)
 
+compare_stronghold <- as.data.frame(matrix(NA, nrow = 2, ncol = 3))
+compare_stronghold[1,] <- c(mean(table$PRIstr), mean(table$PRDstr), mean(table$PANstr))
+compare_stronghold[2,] <- c(mean(table$PRIstr2), mean(table$PRDstr2), mean(table$PANstr2))
+colnames(compare_stronghold) <- c("PRI Stronghold", "PRD Stronghold", "PAN Stronghold")
+rownames(compare_stronghold) <- c("Original (Majority)", "New (10% Margin)")
+
+print(xtable(compare_stronghold))
+
 ```
 
 ### Distance plot (New Stronghold threshold)
@@ -1658,9 +1666,9 @@ distance <- ggplot()+
   theme(axis.text=element_text(size=12),
         axis.title=element_text(size=12),
         legend.text = element_text(size = 12),
-        plot.title = element_text(hjust = .5))
+        plot.title = element_text(hjust = .5),legend.position = "none")
 
-ggsave("distance2.jpg")
+ggsave("distance2.jpg", width = 7, height = 7)
 ```
 
 ### For the Quantiles (New Stronghold threshold)
@@ -1753,9 +1761,9 @@ ggplot()+
   theme(axis.text=element_text(size=12),
         axis.title=element_text(size=12),
         legend.text = element_text(size = 12),
-        plot.title = element_text(hjust = .5)) -> quantiles
+        plot.title = element_text(hjust = .5),legend.position = "none") -> quantiles
 
-ggsave("quantiles2.jpg")
+ggsave("quantiles2.jpg", width = 7, height = 7)
 ```
 
 ###For the Deciles (New Stronghold threshold)
@@ -1856,9 +1864,9 @@ ggplot()+
   theme(axis.text=element_text(size=12),
         axis.title=element_text(size=12),
         legend.text = element_text(size = 12),
-        plot.title = element_text(hjust = .5)) -> deciles
+        plot.title = element_text(hjust = .5),legend.position = "none") -> deciles
 
-ggsave("deciles2.jpg")
+ggsave("deciles2.jpg", width = 7, height = 7)
 ```
 
 ### Log distance (New Stronghold threshold)
@@ -1950,9 +1958,9 @@ logdist <- ggplot()+
   theme(axis.text=element_text(size= 12),
         axis.title=element_text(size= 12),
         legend.text = element_text(size = 12),
-        plot.title = element_text(hjust = 0.5))
+        plot.title = element_text(hjust = 0.5),legend.position = "none")
 
-ggsave("logdist2.jpg")
+ggsave("logdist2.jpg", width = 7, height = 7)
 ```
 
 Sample non-distance model for section 3: 
