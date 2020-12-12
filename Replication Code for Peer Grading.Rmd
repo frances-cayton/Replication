@@ -313,6 +313,7 @@ stargazer(coeftest(benchmarkPRI.1.proximity, covBMprox), coeftest(benchmarkPRI.1
 ```
 
 
+
 Noting the lack of high turnout & PRD observations (basis of tables 1 & 2  in the paper) 
 ```{r}
 
@@ -825,9 +826,9 @@ logdist <- ggplot()+
   theme(axis.text=element_text(size= 12),
         axis.title=element_text(size= 12),
         legend.text = element_text(size = 12),
-        plot.title = element_text(hjust = 0.5))
+        plot.title = element_text(hjust = 0.5), legend.position = "none")
 
-ggsave("logdist.jpg")
+ggsave("logdist.jpg", width = 5, height = 7)
 ```
 
 
@@ -1952,7 +1953,7 @@ logdist <- ggplot()+
                       ymax=upper, fill=dv),  alpha=0.5)+theme_bw()+
   ylab("Predicted vote shares (%)") +
   xlab("Distance to Soriana (km)")+ 
-  ggtitle("LogDistance") +
+  ggtitle("LogDistance - New Turnout Metric") +
   scale_fill_manual(values = c("#F0E442","red", "deepskyblue2"), name="")+
   scale_linetype_manual(values=c("solid", "longdash","dotted"), name="" )+
   theme(axis.text=element_text(size= 12),
@@ -1960,7 +1961,7 @@ logdist <- ggplot()+
         legend.text = element_text(size = 12),
         plot.title = element_text(hjust = 0.5),legend.position = "none")
 
-ggsave("logdist2.jpg", width = 7, height = 7)
+ggsave("logdist2.jpg", width = 5, height = 7)
 ```
 
 Sample non-distance model for section 3: 
