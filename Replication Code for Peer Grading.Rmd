@@ -306,6 +306,15 @@ covBMdeciles <- cluster.vcov(benchmarkPRI.1.Decile, table$id_dist)
 covBMlogs <- cluster.vcov(benchmarkPRI.1.log, table$id_dist)
 ```
 
+To add to the table (below) as it was not in the stargazer output
+```{r}
+summary(benchmarkPRI.1.proximity)[9]
+summary(benchmarkPRI.1.distance)[9]
+summary(benchmarkPRI.1.Quantile)[9]
+summary(benchmarkPRI.1.Decile)[9]
+summary(benchmarkPRI.1.log)[9]
+```
+
 ### Table 1 - All Distance Models in Comparison - Including as an appendix but not in the text
 
 ```{r}
