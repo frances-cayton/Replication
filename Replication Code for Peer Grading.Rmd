@@ -318,7 +318,7 @@ summary(benchmarkPRI.1.log)[9]
 ### Table 1 - All Distance Models in Comparison - Including as an appendix but not in the text
 
 ```{r}
-stargazer(coeftest(benchmarkPRI.1.proximity, covBMprox), coeftest(benchmarkPRI.1.distance, covBMdist), coeftest(benchmarkPRI.1.Quantile, covBMquantiles), coeftest(benchmarkPRI.1.Decile, covBMdeciles), coeftest(benchmarkPRI.1.log, covBMlogs), star.cutoffs = c(0.05, 0.01, 0.001),  digits=3)
+stargazer(coeftest(benchmarkPRI.1.proximity, covBMprox), coeftest(benchmarkPRI.1.distance, covBMdist), coeftest(benchmarkPRI.1.Quantile, covBMquantiles), coeftest(benchmarkPRI.1.Decile, covBMdeciles), coeftest(benchmarkPRI.1.log, covBMlogs), style = "apsr", star.cutoffs = c(0.05, 0.01, 0.001),  digits=3)
 ```
 
 
